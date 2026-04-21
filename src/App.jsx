@@ -2,6 +2,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import WalletButton from './components/WalletButton';
 import Verify from './pages/Verify';
+import Credentials from './pages/Credentials';
 
 export default function App() {
   return (
@@ -17,6 +18,10 @@ export default function App() {
             <span className="font-mono font-bold text-xl tracking-wider" style={{ color: '#B794F6' }}>OWNLY</span>
           </Link>
           <nav className="flex items-center gap-8">
+            <Link to="/credentials" className="text-sm font-mono transition-opacity hover:opacity-70"
+              style={{ color: 'rgba(240,234,255,0.7)' }}>
+              Mis Credenciales
+            </Link>
             <Link to="/verify" className="text-sm font-mono transition-opacity hover:opacity-70"
               style={{ color: 'rgba(240,234,255,0.7)' }}>
               Verificador
@@ -28,6 +33,7 @@ export default function App() {
 
       {/* Routes */}
       <Routes>
+        <Route path="/credentials" element={<Credentials />} />
         <Route path="/verify" element={<Verify />} />
         <Route path="/" element={<Home />} />
         <Route path="*" element={<Home />} />

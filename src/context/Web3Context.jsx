@@ -1,16 +1,14 @@
 import { createContext, useContext } from 'react';
 import { WagmiProvider, createConfig, http } from 'wagmi';
 import { polygonAmoy } from 'wagmi/chains';
+import { injected } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit';
-import '@rainbow-me/rainbowkit/styles.css';
 
 const queryClient = new QueryClient();
 
-const config = getDefaultConfig({
-  appName: 'Ownly',
-  projectId: 'ownly-zk-verification',
+const config = createConfig({
   chains: [polygonAmoy],
+  connectors: [injected()],
   transports: {
     [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology'),
   },
@@ -22,11 +20,9 @@ export function Web3Provider({ children }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <Web3Context.Provider value={{}}>
-            {children}
-          </Web3Context.Provider>
-        </RainbowKitProvider>
+        <Web3Context.Provider value={{}}>
+          {children}
+        </Web3Context.Provider>
       </QueryClientProvider>
     </WagmiProvider>
   );

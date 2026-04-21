@@ -1,11 +1,17 @@
-import { useAccount, useBalance, useDisconnect } from 'wagmi';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useAccount, useBalance, useDisconnect, useConnect } from 'wagmi';
 
 export function useWallet() {
   const { address, isConnected, chainId } = useAccount();
   const { data: balanceData } = useBalance({ address });
   const { disconnect } = useDisconnect();
-  const { openConnectModal } = useConnectModal();
+  const { connect, connectors } = useConnect();
+
+  const handleConnect = () => {
+    const injectedConnector = connectors.find(c => c.id === 'injected');
+    if (injectedConnector) {
+      connect({ connector: injectedConnector });
+    }
+  };
 
   return {
     address,
@@ -14,6 +20,6 @@ export function useWallet() {
     balance: balanceData?.formatted || '0',
     balanceSymbol: balanceData?.symbol || 'POL',
     disconnect,
-    connect: openConnectModal,
+    connect: handleConnect,
   };
 }
