@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import CryptoJS from 'crypto-js';
 
 const STORAGE_KEY = 'ownly_credentials';
-const SECRET_KEY = 'ownly-secret-key-dev'; // En prod, usar algo más seguro
+
+// Simple base64 encoding (for dev - use proper encryption in prod)
+const encode = (str) => btoa(JSON.stringify(str));
+const decode = (str) => JSON.parse(atob(str));
 
 export function useCredentials() {
   const [credentials, setCredentials] = useState([]);
@@ -16,10 +18,9 @@ export function useCredentials() {
   // Cargar desde localStorage
   const loadCredentials = () => {
     try {
-      const encrypted = localStorage.getItem(STORAGE_KEY);
-      if (encrypted) {
-        const decrypted = CryptoJS.AES.decrypt(encrypted, SECRET_KEY).toString(CryptoJS.enc.Utf8);
-        setCredentials(JSON.parse(decrypted));
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setCredentials(decode(stored));
       }
       setLoading(false);
     } catch (err) {
@@ -32,8 +33,7 @@ export function useCredentials() {
   const saveCredential = (credential) => {
     try {
       const newCreds = [...credentials, { ...credential, id: Date.now(), createdAt: new Date().toISOString() }];
-      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(newCreds), SECRET_KEY).toString();
-      localStorage.setItem(STORAGE_KEY, encrypted);
+      localStorage.setItem(STORAGE_KEY, encode(newCreds));
       setCredentials(newCreds);
       return newCreds[newCreds.length - 1];
     } catch (err) {
@@ -46,8 +46,7 @@ export function useCredentials() {
   const deleteCredential = (id) => {
     try {
       const newCreds = credentials.filter(c => c.id !== id);
-      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(newCreds), SECRET_KEY).toString();
-      localStorage.setItem(STORAGE_KEY, encrypted);
+      localStorage.setItem(STORAGE_KEY, encode(newCreds));
       setCredentials(newCreds);
     } catch (err) {
       console.error('Error deleting credential:', err);
