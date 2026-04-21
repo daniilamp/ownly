@@ -3,6 +3,7 @@ import { Shield } from 'lucide-react';
 import WalletButton from './components/WalletButton';
 import Verify from './pages/Verify';
 import Credentials from './pages/Credentials';
+import IssuerDashboard from './pages/IssuerDashboard';
 
 export default function App() {
   return (
@@ -26,6 +27,10 @@ export default function App() {
               style={{ color: 'rgba(240,234,255,0.7)' }}>
               Verificador
             </Link>
+            <Link to="/issuer" className="text-sm font-mono transition-opacity hover:opacity-70"
+              style={{ color: 'rgba(240,234,255,0.7)' }}>
+              Emisor
+            </Link>
             <WalletButton />
           </nav>
         </div>
@@ -35,6 +40,7 @@ export default function App() {
       <Routes>
         <Route path="/credentials" element={<Credentials />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/issuer" element={<IssuerDashboard />} />
         <Route path="/" element={<Home />} />
         <Route path="*" element={<Home />} />
       </Routes>
