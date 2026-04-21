@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: ownly-api
+    env: node
+    plan: free
+    buildCommand: cd ownly-backend/api && npm install
+    startCommand: cd ownly-backend/api && npm start
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://ownly-frontend.vercel.app
+      - key: RPC_URL
+        value: https://rpc-amoy.polygon.technology
+      - key: CREDENTIAL_REGISTRY_ADDRESS
+        value: 0x193f9ad4b82e7211D885eFb913F1741892F430fE
+      - key: BATCH_PROCESSOR_ADDRESS
+        value: 0x65ac8030675592aeB9E93994ac35bA48282E98CA
+      - key: VERIFIER_CONTRACT_ADDRESS
+        value: 0x7368efd0B81F675B3B392e8534d8A74FA0b0D2A2
+      - key: ISSUER_PRIVATE_KEY
+        value: 0xbba7ea7736f54a85328ba00ec42598d00d781bf2918f1adf38414e41d09c3360
