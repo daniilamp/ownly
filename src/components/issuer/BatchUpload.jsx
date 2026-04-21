@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
+import { useContracts } from '@/hooks/useContracts';
+import { keccak256, encodePacked } from 'viem';
 
 export default function BatchUpload() {
   const { address } = useWallet();
+  const { addCommitments, submitBatch, isPending, isConfirming, isSuccess, error, hash } = useContracts();
   const [file, setFile] = useState(null);
   const [credentials, setCredentials] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -28,6 +31,24 @@ export default function BatchUpload() {
     }
   };
 
+  const buildMerkleTree = (leaves) => {
+    if (leaves.length === 0) return null;
+    let layer = [...leaves];
+    
+    while (layer.length > 1) {
+      const nextLayer = [];
+      for (let i = 0; i < layer.length; i += 2) {
+        const left = layer[i];
+        const right = i + 1 < layer.length ? layer[i + 1] : layer[i];
+        const sorted = left <= right ? [left, right] : [right, left];
+        nextLayer.push(keccak256(encodePacked(['bytes32', 'bytes32'], sorted)));
+      }
+      layer = nextLayer;
+    }
+    
+    return layer[0];
+  };
+
   const handleUpload = async () => {
     if (credentials.length === 0) {
       alert('No hay credenciales para subir');
@@ -38,33 +59,61 @@ export default function BatchUpload() {
     setResult(null);
 
     try {
-      // Simular subida a blockchain (en prod, llamar a la API)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 1. Generar commitments (hash de cada credencial)
+      const commitments = credentials.map(cred => 
+        keccak256(encodePacked(
+          ['string', 'string', 'string'],
+          [cred.name, cred.number, cred.type]
+        ))
+      );
 
-      // Guardar en localStorage como historial
-      const batch = {
-        id: Date.now(),
-        issuer: address,
-        count: credentials.length,
-        timestamp: new Date().toISOString(),
-        merkleRoot: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-        txHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-      };
+      // 2. Construir Merkle tree
+      const merkleRoot = buildMerkleTree(commitments);
 
-      const history = JSON.parse(localStorage.getItem('issuer_batches') || '[]');
-      history.unshift(batch);
-      localStorage.setItem('issuer_batches', JSON.stringify(history));
-
-      setResult({
-        success: true,
-        batchId: batch.id,
-        merkleRoot: batch.merkleRoot,
-        txHash: batch.txHash,
+      // 3. Llamar a la API para publicar en blockchain
+      const response = await fetch(`${import.meta.env.VITE_OWNLY_API_URL}/api/batch/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: credentials.map((cred, i) => ({
+            hash: commitments[i],
+            userAddress: address,
+            issuerSig: keccak256(encodePacked(['string'], [cred.number])),
+          })),
+        }),
       });
 
-      setFile(null);
-      setCredentials([]);
+      const data = await response.json();
+
+      if (data.success) {
+        // Guardar en localStorage como historial
+        const batch = {
+          id: data.batchId,
+          issuer: address,
+          count: credentials.length,
+          timestamp: new Date().toISOString(),
+          merkleRoot: data.merkleRoot,
+          txHash: data.txHash,
+        };
+
+        const history = JSON.parse(localStorage.getItem('issuer_batches') || '[]');
+        history.unshift(batch);
+        localStorage.setItem('issuer_batches', JSON.stringify(history));
+
+        setResult({
+          success: true,
+          batchId: batch.id,
+          merkleRoot: batch.merkleRoot,
+          txHash: batch.txHash,
+        });
+
+        setFile(null);
+        setCredentials([]);
+      } else {
+        throw new Error(data.error || 'Error al publicar el lote');
+      }
     } catch (err) {
+      console.error('Upload error:', err);
       setResult({
         success: false,
         error: err.message,
