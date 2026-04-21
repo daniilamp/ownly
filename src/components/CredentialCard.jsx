@@ -1,13 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Trash2, QrCode, Copy, Check } from 'lucide-react';
-import QRCode from 'qrcode';
 import { useCredentials } from '@/hooks/useCredentials';
 
 export default function CredentialCard({ credential, onDelete }) {
   const { generateQRData } = useCredentials();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
-  const canvasRef = useRef(null);
 
   const qrData = generateQRData(credential.id);
   const typeLabel = {
@@ -16,14 +14,10 @@ export default function CredentialCard({ credential, onDelete }) {
     license: 'Carnet de Conducir',
   }[credential.type] || credential.type;
 
-  // Generar QR cuando se muestre
-  useEffect(() => {
-    if (showQR && qrData && canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, qrData, { width: 200 }, (err) => {
-        if (err) console.error('Error generating QR:', err);
-      });
-    }
-  }, [showQR, qrData]);
+  // Usar API pública para generar QR
+  const qrImageUrl = qrData 
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`
+    : '';
 
   const handleCopyQR = () => {
     navigator.clipboard.writeText(qrData);
@@ -76,8 +70,13 @@ export default function CredentialCard({ credential, onDelete }) {
       {/* QR Section */}
       {showQR ? (
         <div className="mb-4 p-4 rounded-lg text-center"
-          style={{ background: 'rgba(255,255,255,0.05)' }}>
-          <canvas ref={canvasRef} className="mx-auto mb-3" />
+          style={{ background: 'rgba(255,255,255,0.95)' }}>
+          <img 
+            src={qrImageUrl} 
+            alt="QR Code" 
+            className="mx-auto mb-3 rounded"
+            style={{ width: 200, height: 200 }}
+          />
           <button
             onClick={handleCopyQR}
             className="flex items-center gap-2 mx-auto px-3 py-1 rounded text-xs font-semibold transition-all"
@@ -86,7 +85,7 @@ export default function CredentialCard({ credential, onDelete }) {
               color: copied ? '#34D399' : '#B794F6',
             }}>
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            {copied ? 'Copiado' : 'Copiar QR'}
+            {copied ? 'Copiado' : 'Copiar datos'}
           </button>
         </div>
       ) : null}
