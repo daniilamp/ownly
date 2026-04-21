@@ -1,0 +1,15 @@
+{
+  "name": "ownly-circuits",
+  "version": "1.0.0",
+  "description": "Ownly ZK circuits — age, license, residency",
+  "scripts": {
+    "build": "bash build.sh",
+    "test:age": "node test/test_age.js",
+    "test:license": "node test/test_license.js",
+    "test:residency": "node test/test_residency.js"
+  },
+  "dependencies": {
+    "circomlib": "^2.0.5",
+    "snarkjs": "^0.7.4"
+  }
+}

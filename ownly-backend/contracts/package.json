@@ -1,0 +1,21 @@
+{
+  "name": "ownly-contracts",
+  "version": "1.0.0",
+  "description": "Ownly smart contracts — CredentialRegistry, BatchProcessor, VerifierContract",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network polygonZkEVM",
+    "deploy:amoy": "hardhat run scripts/deploy.js --network polygonAmoy",
+    "verify": "hardhat verify --network polygonZkEVM",
+    "node": "hardhat node"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.0"
+  }
+}

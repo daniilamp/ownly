@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "nixpacks"
+  },
+  "deploy": {
+    "startCommand": "cd ownly-backend/api && npm install && npm start",
+    "restartPolicyMaxRetries": 5
+  }
+}
