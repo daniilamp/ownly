@@ -1,5 +1,6 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
+import WalletButton from './components/WalletButton';
 import Verify from './pages/Verify';
 
 export default function App() {
@@ -15,11 +16,12 @@ export default function App() {
             </div>
             <span className="font-mono font-bold text-xl tracking-wider" style={{ color: '#B794F6' }}>OWNLY</span>
           </Link>
-          <nav className="flex gap-6">
+          <nav className="flex items-center gap-8">
             <Link to="/verify" className="text-sm font-mono transition-opacity hover:opacity-70"
               style={{ color: 'rgba(240,234,255,0.7)' }}>
               Verificador
             </Link>
+            <WalletButton />
           </nav>
         </div>
       </header>
