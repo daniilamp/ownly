@@ -28,6 +28,7 @@ export default function App() {
       <Routes>
         <Route path="/verify" element={<Verify />} />
         <Route path="/" element={<Home />} />
+        <Route path="*" element={<Home />} />
       </Routes>
     </div>
   );
