@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Trash2, QrCode, Copy, Check } from 'lucide-react';
-import QRCode from 'qrcode.react';
+import QRCode from 'qrcode';
 import { useCredentials } from '@/hooks/useCredentials';
 
 export default function CredentialCard({ credential, onDelete }) {
   const { generateQRData } = useCredentials();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const canvasRef = useRef(null);
 
   const qrData = generateQRData(credential.id);
   const typeLabel = {
@@ -14,6 +15,15 @@ export default function CredentialCard({ credential, onDelete }) {
     passport: 'Pasaporte',
     license: 'Carnet de Conducir',
   }[credential.type] || credential.type;
+
+  // Generar QR cuando se muestre
+  useEffect(() => {
+    if (showQR && qrData && canvasRef.current) {
+      QRCode.toCanvas(canvasRef.current, qrData, { width: 200 }, (err) => {
+        if (err) console.error('Error generating QR:', err);
+      });
+    }
+  }, [showQR, qrData]);
 
   const handleCopyQR = () => {
     navigator.clipboard.writeText(qrData);
@@ -67,13 +77,7 @@ export default function CredentialCard({ credential, onDelete }) {
       {showQR ? (
         <div className="mb-4 p-4 rounded-lg text-center"
           style={{ background: 'rgba(255,255,255,0.05)' }}>
-          <QRCode
-            value={qrData}
-            size={200}
-            level="H"
-            includeMargin={true}
-            className="mx-auto mb-3"
-          />
+          <canvas ref={canvasRef} className="mx-auto mb-3" />
           <button
             onClick={handleCopyQR}
             className="flex items-center gap-2 mx-auto px-3 py-1 rounded text-xs font-semibold transition-all"
