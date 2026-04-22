@@ -21,10 +21,12 @@ const TYPE_LABELS = {
 };
 
 const USE_CASES = [
-  { icon: '🍹', title: 'Ocio y Eventos', desc: 'Verificación de edad en locales sin ver el DNI físico' },
-  { icon: '🚗', title: 'Alquileres', desc: 'Confirma carnet y solvencia sin fotocopias' },
-  { icon: '🏨', title: 'Hoteles', desc: 'Registro de viajeros automático y GDPR-compliant' },
-  { icon: '💼', title: 'Empleo', desc: 'Verifica títulos y antecedentes al instante' },
+  { icon: '🍹', title: 'Ocio y Eventos', desc: 'Verificación de edad en locales sin mostrar el DNI físico. Cumple GDPR.' },
+  { icon: '🚗', title: 'Alquileres y Movilidad', desc: 'Confirma carnet de conducir y solvencia sin fotocopias ni datos sensibles.' },
+  { icon: '🏨', title: 'Hoteles y Alojamiento', desc: 'Registro de viajeros automático, GDPR-compliant y sin almacenar datos.' },
+  { icon: '💼', title: 'Recursos Humanos', desc: 'Verifica títulos, antecedentes y experiencia laboral al instante.' },
+  { icon: '🏥', title: 'Sanidad', desc: 'Confirma identidad del paciente y cobertura médica sin exponer historial.' },
+  { icon: '🎓', title: 'Educación', desc: 'Valida títulos académicos y certificaciones de forma instantánea.' },
 ];
 
 export default function Verify() {
@@ -47,55 +49,38 @@ export default function Verify() {
   };
 
   return (
-    <div className="min-h-screen font-space" style={{ background: '#070510' }}>
+    <div className="min-h-screen" style={{ background: '#070510' }}>
       {showScanner && <QRScanner onScan={handleQRScan} onClose={() => setShowScanner(false)} />}
-
-      {/* Grid bg */}
-      <div className="fixed inset-0 pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(rgba(183,148,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(183,148,246,0.04) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }} />
-
-      {/* Ambient glows */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full blur-[150px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(183,148,246,0.12), transparent 70%)' }} />
-      <div className="fixed bottom-0 right-0 w-96 h-96 rounded-full blur-[120px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(0,255,242,0.06), transparent 70%)' }} />
 
       <div className="relative z-10 max-w-2xl mx-auto px-6 py-12">
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+        <div className="mb-10 animate-fadeIn">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
               style={{ background: 'rgba(183,148,246,0.12)', border: '1px solid rgba(183,148,246,0.25)' }}>
-              <Shield className="w-5 h-5" style={{ color: '#B794F6' }} />
+              <Shield className="w-6 h-6" style={{ color: '#B794F6' }} />
             </div>
-            <span className="font-mono font-bold text-xl tracking-wider" style={{ color: '#B794F6' }}>OWNLY</span>
-            <span className="text-xs font-mono px-2 py-0.5 rounded-full ml-1"
-              style={{ background: 'rgba(0,255,242,0.08)', color: '#00FFF2', border: '1px solid rgba(0,255,242,0.2)' }}>
-              VERIFY
-            </span>
+            <h1 className="text-4xl font-bold" style={{ color: '#F0EAFF' }}>
+              Verificador
+            </h1>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: '#F0EAFF' }}>
-            Verificador de Identidad
-          </h1>
-          <p className="text-sm md:text-base" style={{ color: 'rgba(240,234,255,0.5)' }}>
+          <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '1rem' }}>
             Confirma la identidad de un usuario{' '}
             <span style={{ color: '#B794F6' }}>sin acceder a sus datos privados</span>
           </p>
 
           {/* API status badge */}
           {apiOnline !== null && (
-            <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-mono"
+            <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs"
               style={{
                 background: apiOnline ? 'rgba(52,211,153,0.08)' : 'rgba(251,191,36,0.08)',
                 border: `1px solid ${apiOnline ? 'rgba(52,211,153,0.2)' : 'rgba(251,191,36,0.2)'}`,
                 color: apiOnline ? '#34D399' : '#FBBF24',
               }}>
               {apiOnline
-                ? <><Wifi className="w-3 h-3" /> API conectada · ZK activo</>
-                : <><WifiOff className="w-3 h-3" /> Modo demo</>
+                ? <><Wifi className="w-3 h-3 mr-1" /> API conectada · ZK activo</>
+                : <><WifiOff className="w-3 h-3 mr-1" /> Modo demo</>
               }
             </div>
           )}
@@ -160,7 +145,7 @@ export default function Verify() {
 
             {/* Demo tokens */}
             <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(183,148,246,0.1)' }}>
-              <div className="text-xs font-mono mb-3" style={{ color: 'rgba(240,234,255,0.35)' }}>TOKENS DE DEMO</div>
+              <div className="text-xs mb-3" style={{ color: 'rgba(240,234,255,0.35)' }}>TOKENS DE DEMO</div>
               <div className="flex flex-wrap gap-2">
                 {[
                   { token: 'A1B2C3D4E5F6A7B8', label: 'DNI Válido' },
@@ -168,7 +153,7 @@ export default function Verify() {
                   { token: 'EXPIRED123456789', label: 'QR Caducado' },
                 ].map(({ token: t, label }) => (
                   <button key={t} onClick={() => setToken(t)}
-                    className="text-xs font-mono px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
+                    className="text-xs px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
                     style={{ background: 'rgba(183,148,246,0.08)', color: 'rgba(183,148,246,0.7)', border: '1px solid rgba(183,148,246,0.15)' }}>
                     {label}
                   </button>
@@ -210,7 +195,7 @@ export default function Verify() {
 
               {/* Source badge */}
               {result.valid && (
-                <span className="text-xs font-mono px-2 py-0.5 rounded-full mb-2"
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full mb-2"
                   style={{
                     background: result.source === 'demo' ? 'rgba(251,191,36,0.1)' : 'rgba(52,211,153,0.1)',
                     color: result.source === 'demo' ? '#FBBF24' : '#34D399',
@@ -234,7 +219,7 @@ export default function Verify() {
                 {result.claims?.length > 0 && (
                   <div className="rounded-xl p-4 mb-4"
                     style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)' }}>
-                    <div className="text-xs font-mono mb-3" style={{ color: 'rgba(52,211,153,0.7)' }}>
+                    <div className="text-xs font-semibold mb-3" style={{ color: 'rgba(52,211,153,0.7)' }}>
                       CLAIMS VERIFICADOS (SIN DATOS PRIVADOS)
                     </div>
                     <div className="space-y-2">
@@ -253,25 +238,25 @@ export default function Verify() {
                   {result.credential_name && (
                     <div className="rounded-xl p-3 col-span-2"
                       style={{ background: 'rgba(183,148,246,0.05)', border: '1px solid rgba(183,148,246,0.12)' }}>
-                      <div className="text-xs font-mono mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>CREDENCIAL</div>
+                      <div className="text-xs font-semibold mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>CREDENCIAL</div>
                       <div className="text-sm font-medium" style={{ color: '#F0EAFF' }}>{result.credential_name}</div>
                     </div>
                   )}
                   <div className="rounded-xl p-3"
                     style={{ background: 'rgba(183,148,246,0.05)', border: '1px solid rgba(183,148,246,0.12)' }}>
-                    <div className="text-xs font-mono mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>TIPO</div>
+                    <div className="text-xs font-semibold mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>TIPO</div>
                     <div className="text-sm font-medium" style={{ color: '#F0EAFF' }}>
                       {TYPE_LABELS[result.credential_type] || result.credential_type}
                     </div>
                   </div>
                   <div className="rounded-xl p-3"
                     style={{ background: 'rgba(183,148,246,0.05)', border: '1px solid rgba(183,148,246,0.12)' }}>
-                    <div className="text-xs font-mono mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>EMISOR</div>
+                    <div className="text-xs font-semibold mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>EMISOR</div>
                     <div className="text-sm font-medium truncate" style={{ color: '#F0EAFF' }}>{result.issuer}</div>
                   </div>
                   <div className="rounded-xl p-3"
                     style={{ background: 'rgba(183,148,246,0.05)', border: '1px solid rgba(183,148,246,0.12)' }}>
-                    <div className="text-xs font-mono mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>VERIFICADO</div>
+                    <div className="text-xs font-semibold mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>VERIFICADO</div>
                     <div className="text-sm font-medium" style={{ color: '#F0EAFF' }}>
                       {format(new Date(result.verifiedAt), 'dd MMM HH:mm', { locale: es })}
                     </div>
@@ -279,7 +264,7 @@ export default function Verify() {
                   {result.expiry && (
                     <div className="rounded-xl p-3"
                       style={{ background: 'rgba(183,148,246,0.05)', border: '1px solid rgba(183,148,246,0.12)' }}>
-                      <div className="text-xs font-mono mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>CADUCIDAD</div>
+                      <div className="text-xs font-semibold mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>CADUCIDAD</div>
                       <div className="text-sm font-medium" style={{ color: '#F0EAFF' }}>
                         {format(new Date(result.expiry), 'MM/yyyy', { locale: es })}
                       </div>
@@ -359,14 +344,14 @@ export default function Verify() {
         </div>
 
         {/* B2B Dashboard link */}
-        <Link to="/b2b"
+        <Link to="/dashboard"
           className="flex items-center justify-center gap-2 mt-6 py-3 rounded-xl text-sm font-medium transition-all"
           style={{ background: 'rgba(96,165,250,0.06)', color: '#60A5FA', border: '1px solid rgba(96,165,250,0.2)' }}>
-          <BarChart3 className="w-4 h-4" />Abrir Dashboard B2B →
+          <BarChart3 className="w-4 h-4" />Mi Panel →
         </Link>
 
         <div className="text-center mt-6">
-          <p className="text-xs font-mono" style={{ color: 'rgba(240,234,255,0.2)' }}>
+          <p className="text-xs" style={{ color: 'rgba(240,234,255,0.2)' }}>
             OWNLY · Verificación criptográfica · GDPR Compliant · Polygon zkEVM
           </p>
         </div>

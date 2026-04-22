@@ -40,13 +40,13 @@ export default function CredentialForm({ onSave, onCancel }) {
             onChange={handleChange}
             className="w-full px-4 py-2 rounded-lg outline-none"
             style={{
-              background: 'rgba(183,148,246,0.08)',
+              background: '#1a1030',
               border: '1px solid rgba(183,148,246,0.2)',
               color: '#F0EAFF',
             }}>
-            <option value="dni">DNI</option>
-            <option value="passport">Pasaporte</option>
-            <option value="license">Carnet de Conducir</option>
+            <option value="dni" style={{ background: '#1a1030', color: '#F0EAFF' }}>DNI</option>
+            <option value="passport" style={{ background: '#1a1030', color: '#F0EAFF' }}>Pasaporte</option>
+            <option value="license" style={{ background: '#1a1030', color: '#F0EAFF' }}>Carnet de Conducir</option>
           </select>
         </div>
 

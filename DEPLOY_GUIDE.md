@@ -1,181 +1,99 @@
-# 🚀 Guía de Deploy — Ownly Stack
+# 🚀 Guía de Deploy — OWNLY
 
-## Estado actual
-
-✅ **Backend API** — Listo para Railway  
-✅ **Frontend** — Listo para Vercel  
-✅ **Contratos** — Desplegados en Polygon Amoy  
-✅ **Circuitos ZK** — Compilados  
+## Stack
+- **Frontend**: Vite + React → Vercel
+- **Backend**: Express + Node.js → Railway
+- **Base de datos**: Supabase (ya en la nube)
+- **Blockchain**: Polygon Amoy testnet
 
 ---
 
-## Paso 1: Deploy de la API en Railway
+## 1. Deploy del Backend en Railway
 
-### 1.1 Crea cuenta en Railway
+### Pasos:
+1. Ve a [railway.app](https://railway.app) y crea una cuenta
+2. "New Project" → "Deploy from GitHub repo"
+3. Selecciona el repo, carpeta: `ownly-backend/api`
+4. Railway detecta el `Procfile` automáticamente
 
-1. Ve a [railway.app](https://railway.app)
-2. Haz login con GitHub
-3. Autoriza Railway para acceder a tus repos
-
-### 1.2 Crea un nuevo proyecto
-
-1. Click en **"New Project"**
-2. Selecciona **"Deploy from GitHub"**
-3. Busca tu repo `ownly` (o como se llame)
-4. Selecciona la rama `main`
-
-### 1.3 Configura las variables de entorno
-
-Railway debería detectar automáticamente que es Node.js.
-
-En el panel de Railway, ve a **Variables** y añade estas 8 variables:
-
+### Variables de entorno en Railway:
 ```
 PORT=3001
 NODE_ENV=production
-FRONTEND_URL=https://tu-frontend.vercel.app
+FRONTEND_URL=https://tu-app.vercel.app
 
+# Supabase
+SUPABASE_URL=https://jmbqtvmmldxgstabgpwh.supabase.co
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_KEY=...
+
+# Blockchain
 RPC_URL=https://rpc-amoy.polygon.technology
 CREDENTIAL_REGISTRY_ADDRESS=0x193f9ad4b82e7211D885eFb913F1741892F430fE
-BATCH_PROCESSOR_ADDRESS=0x65ac8030675592aeB9E93994ac35bA48282E98CA
-VERIFIER_CONTRACT_ADDRESS=0x7368efd0B81F675B3B392e8534d8A74FA0b0D2A2
-ISSUER_PRIVATE_KEY=0xbba7ea7736f54a85328ba00ec42598d00d781bf2918f1adf38414e41d09c3360
+ISSUER_PRIVATE_KEY=0x...
+
+# Sumsub (opcional)
+SUMSUB_APP_TOKEN=...
+SUMSUB_SECRET_KEY=...
 ```
 
-### 1.4 Configura el comando de start
-
-En **Settings** → **Build Command**:
-```
-cd ownly-backend/api && npm install
-```
-
-En **Start Command**:
-```
-cd ownly-backend/api && npm start
-```
-
-### 1.5 Deploy
-
-Click en **Deploy** y espera ~2 minutos.
-
-Cuando termine, verás una URL como:
-```
-https://ownly-api-production.up.railway.app
-```
-
-**Guarda esta URL** — la necesitarás para el frontend.
+### URL resultante:
+`https://ownly-api-production.up.railway.app`
 
 ---
 
-## Paso 2: Deploy del Frontend en Vercel
+## 2. Deploy del Frontend en Vercel
 
-### 2.1 Crea cuenta en Vercel
+### Pasos:
+1. Ve a [vercel.com](https://vercel.com) y crea una cuenta
+2. "New Project" → importa tu repo de GitHub
+3. Framework: **Vite** (se detecta automáticamente)
+4. Root directory: `/` (raíz del proyecto)
 
-1. Ve a [vercel.com](https://vercel.com)
-2. Haz login con GitHub
-3. Autoriza Vercel
-
-### 2.2 Importa el proyecto
-
-1. Click en **"Add New..."** → **"Project"**
-2. Selecciona tu repo `ownly`
-3. Vercel detectará automáticamente que es Vite
-
-### 2.3 Configura las variables de entorno
-
-En **Environment Variables**, añade:
-
+### Variables de entorno en Vercel:
 ```
-VITE_OWNLY_API_URL=https://tu-api-railway.app
+VITE_OWNLY_API_URL=https://ownly-api-production.up.railway.app
+VITE_CREDENTIAL_REGISTRY_ADDRESS=0x193f9ad4b82e7211D885eFb913F1741892F430fE
+VITE_BATCH_PROCESSOR_ADDRESS=0x65ac8030675592aeB9E93994ac35bA48282E98CA
+VITE_VERIFIER_CONTRACT_ADDRESS=0x7368efd0B81F675B3B392e8534d8A74FA0b0D2A2
 ```
 
-(Reemplaza con la URL real de Railway del paso anterior)
-
-### 2.4 Deploy
-
-Click en **Deploy** y espera ~1 minuto.
-
-Tu frontend estará disponible en:
-```
-https://ownly.vercel.app
-```
+### URL resultante:
+`https://ownly.vercel.app`
 
 ---
 
-## Paso 3: Verifica que todo funciona
+## 3. Actualizar CORS
 
-### 3.1 Prueba la API
-
-```bash
-curl https://tu-api-railway.app/health
-```
-
-Debería devolver:
-```json
-{"status":"ok","version":"1.0.0"}
-```
-
-### 3.2 Prueba el frontend
-
-1. Ve a `https://ownly.vercel.app/verify`
-2. Introduce un token de demo: `A1B2C3D4E5F6A7B8`
-3. Debería verificar contra tu API en Railway
-
----
-
-## Troubleshooting
-
-### Error: "Cannot find module"
-
-**Causa:** Railway no está ejecutando desde el directorio correcto.
-
-**Solución:** Verifica que en **Start Command** está:
-```
-cd ownly-backend/api && npm start
-```
-
-### Error: "Port already in use"
-
-**Causa:** Hardcodeaste un puerto.
-
-**Solución:** Railway asigna el puerto automáticamente. Usa `process.env.PORT`.
-
-### Error: "RPC connection failed"
-
-**Causa:** La URL de RPC es incorrecta o Polygon Amoy está caído.
-
-**Solución:** Prueba manualmente:
-```bash
-curl -X POST https://rpc-amoy.polygon.technology \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
-```
-
-### Error: "CORS error"
-
-**Causa:** El frontend y la API tienen dominios diferentes.
-
-**Solución:** Verifica que `FRONTEND_URL` en Railway es correcto:
+Una vez tengas la URL de Vercel, actualiza en Railway:
 ```
 FRONTEND_URL=https://ownly.vercel.app
 ```
 
 ---
 
-## Próximos pasos
+## 4. Verificar el deploy
 
-1. **Integrar con base44** (opcional) — si quieres guardar credenciales
-2. **Compilar verifiers Solidity** — para los 3 circuitos ZK
-3. **Deploy a mainnet** — cuando esté listo para producción
+```bash
+# Health check del backend
+curl https://ownly-api-production.up.railway.app/health
+
+# Debería devolver:
+# {"status":"ok","version":"1.0.0"}
+```
 
 ---
 
-## URLs finales
+## Checklist pre-deploy
 
-| Componente | URL |
-|-----------|-----|
-| Frontend | `https://ownly.vercel.app` |
-| API | `https://tu-api-railway.app` |
-| Contratos | Polygon Amoy (testnet) |
-| Explorer | `https://cardona-zkevm.polygonscan.com` |
-
+- [x] No hay `localhost:3001` hardcodeados en el frontend
+- [x] Variables de entorno en `.env.example`
+- [x] CORS configurado para Vercel
+- [x] `vercel.json` con rewrites para SPA
+- [x] `.gitignore` excluye `.env.local`
+- [ ] Subir código a GitHub
+- [ ] Crear proyecto en Railway
+- [ ] Crear proyecto en Vercel
+- [ ] Configurar variables de entorno en ambos
+- [ ] Verificar health check del backend
+- [ ] Probar flujo completo en producción
