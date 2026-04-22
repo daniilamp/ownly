@@ -23,8 +23,15 @@ export default function Login() {
     setError(null);
 
     try {
+      // En móvil sin window.ethereum, redirigir al navegador de Metamask
       if (!window.ethereum) {
-        throw new Error('Metamask no está instalado. Por favor instálalo desde https://metamask.io');
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          const currentUrl = encodeURIComponent(window.location.href);
+          window.location.href = `https://metamask.app.link/dapp/${window.location.host}`;
+          return;
+        }
+        throw new Error('Metamask no está instalado. Instálalo desde https://metamask.io');
       }
 
       if (!window.ethereum.isMetaMask) {
@@ -224,7 +231,7 @@ export default function Login() {
                   ) : (
                     <>
                       <Wallet className="w-5 h-5" />
-                      Conectar Metamask
+                      {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Abrir en Metamask' : 'Conectar Metamask'}
                     </>
                   )}
                 </button>
