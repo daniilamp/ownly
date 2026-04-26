@@ -153,8 +153,9 @@ export default function Login() {
         <div className="max-w-md w-full animate-fadeIn">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-6 animate-float">
-              <img src="/logo.png" alt="Ownly" className="w-16 h-16 rounded-2xl object-cover" />
+            <div className="flex items-center justify-center mb-6 animate-float">
+              <img src="/logo.png" alt="Ownly" className="w-28 h-28 rounded-3xl object-cover"
+                style={{ boxShadow: '0 0 60px rgba(183,148,246,0.25)' }} />
             </div>
             <h1 className="text-4xl font-bold mb-3" style={{ color: '#F0EAFF' }}>
               Bienvenido a Ownly

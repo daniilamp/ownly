@@ -48,9 +48,8 @@ function AppContent() {
       <header className="relative z-20 border-b"
         style={{ background: 'rgba(183,148,246,0.04)', borderColor: 'rgba(183,148,246,0.15)', backdropFilter: 'blur(20px)' }}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/logo.png" alt="Ownly" className="w-10 h-10 rounded-xl object-cover" />
-            <span className="font-bold text-xl tracking-tight gradient-text">Ownly</span>
+          <Link to="/" className="flex items-center">
+            <img src="/logo.png" alt="Ownly" className="w-12 h-12 rounded-xl object-cover" />
           </Link>
 
           {/* Desktop nav */}
