@@ -8,6 +8,7 @@ import { credentialRouter } from "./routes/credentials.js";
 import { batchRouter } from "./routes/batch.js";
 import { kycRouter } from "./routes/kyc.js";
 import { documentRouter } from "./routes/documents.js";
+import { authRouter } from "./routes/auth.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -57,6 +58,7 @@ app.use("/api/credentials", credentialRouter);
 app.use("/api/batch", batchRouter);
 app.use("/api/kyc", kycRouter);
 app.use("/api/documents", documentRouter);
+app.use("/api/auth", authRouter);
 
 // Health check
 app.get("/health", (_, res) => res.json({ status: "ok", version: "1.0.0" }));

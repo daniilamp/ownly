@@ -8,17 +8,6 @@ import { isBiometricAvailable, authenticateWithBiometric, getBiometricCredential
 
 export const AuthContext = createContext();
 
-/**
- * Hash password using Web Crypto API (SHA-256 + salt)
- */
-async function hashPassword(password, salt) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + salt);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -112,21 +101,19 @@ export function AuthProvider({ children }) {
     try {
       if (!email || !password) throw new Error('Email y contraseña requeridos');
 
-      const usersDB = JSON.parse(localStorage.getItem('ownly_users_db') || '{}');
-      const stored = usersDB[email.toLowerCase()];
+      const apiUrl = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (!stored) {
-        throw new Error('No existe una cuenta con ese email. Regístrate primero.');
-      }
-
-      const hash = await hashPassword(password, stored.salt);
-      if (hash !== stored.passwordHash) {
-        throw new Error('Contraseña incorrecta.');
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión');
 
       const userData = {
-        id: email,
-        email: email,
+        id: data.userId,
+        email: data.email,
         type: 'email',
         loginTime: new Date().toISOString(),
       };
@@ -135,7 +122,7 @@ export function AuthProvider({ children }) {
       setAuthMethod('email');
       localStorage.setItem('ownly_user', JSON.stringify(userData));
       localStorage.setItem('ownly_auth_method', 'email');
-      localStorage.setItem('ownly_userId', email);
+      localStorage.setItem('ownly_userId', data.email);
 
       return userData;
     } catch (err) {
@@ -147,34 +134,18 @@ export function AuthProvider({ children }) {
     try {
       if (!email || !password) throw new Error('Email y contraseña requeridos');
 
-      // Intentar cargar desde localStorage (mismo dispositivo/navegador)
-      const usersDB = JSON.parse(localStorage.getItem('ownly_users_db') || '{}');
+      const apiUrl = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (usersDB[email.toLowerCase()]) {
-        throw new Error('Ya existe una cuenta con ese email.');
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al registrarse');
 
-      const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-        .map(b => b.toString(16).padStart(2, '0')).join('');
-      const passwordHash = await hashPassword(password, salt);
-
-      usersDB[email.toLowerCase()] = { passwordHash, salt, createdAt: new Date().toISOString() };
-      localStorage.setItem('ownly_users_db', JSON.stringify(usersDB));
-
-      const userData = {
-        id: email,
-        email: email,
-        type: 'email',
-        loginTime: new Date().toISOString(),
-      };
-
-      setUser(userData);
-      setAuthMethod('email');
-      localStorage.setItem('ownly_user', JSON.stringify(userData));
-      localStorage.setItem('ownly_auth_method', 'email');
-      localStorage.setItem('ownly_userId', email);
-
-      return userData;
+      // Login automático tras registro
+      return await loginWithEmail(email, password);
     } catch (err) {
       throw new Error(err.message || 'Error al registrarse');
     }
