@@ -12,6 +12,7 @@ import Credentials from './pages/Credentials';
 import Documents from './pages/Documents';
 import KYC from './pages/KYC';
 import NotFound from './pages/NotFound';
+import Access from './pages/Access';
 
 // Google OAuth Client ID (reemplaza con tu Client ID real)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
@@ -114,6 +115,7 @@ function AppContent() {
         <Route path="/credentials" element={isAuthenticated ? <Credentials /> : <Navigate to="/login" />} />
         <Route path="/documents" element={isAuthenticated ? <Documents /> : <Navigate to="/login" />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/access/:accessId" element={<Access />} />
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
