@@ -1,297 +1,204 @@
 /**
- * Dashboard Page
- * User dashboard with verified identity information
+ * Dashboard — QR como core del producto
+ * Flujo: estado → mostrar QR → usar en acceso
  */
 
 import { useState, useEffect } from 'react';
-import { User, Shield, FileText, Lock, Wallet } from 'lucide-react';
+import { Shield, FileText, QrCode, CheckCircle, Clock, ChevronRight, Copy, Check, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useCredentials } from '@/hooks/useCredentials';
 import { useDocuments } from '@/hooks/useDocuments';
 
 export default function Dashboard() {
-  const { user, authMethod, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { credentials, loading: credLoading } = useCredentials();
-  const { documents, loading: docLoading } = useDocuments();
+  const { documents } = useDocuments();
   const [kycData, setKycData] = useState(null);
   const [kycLoading, setKycLoading] = useState(true);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    // Load KYC data if available
+    if (!user) { navigate('/login'); return; }
     loadKycData();
-  }, [user, navigate]);
+  }, [user]);
 
   const loadKycData = async () => {
     try {
       const userId = localStorage.getItem('ownly_userId');
       if (!userId) { setKycLoading(false); return; }
-
       const apiUrl = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/kyc/user/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
+      const res = await fetch(`${apiUrl}/api/kyc/user/${userId}`);
+      if (res.ok) {
+        const data = await res.json();
         setKycData(data.verification);
       }
-    } catch (err) {
-      console.error('Error loading KYC data:', err);
+    } catch (e) {
+      console.error(e);
     } finally {
       setKycLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const isVerified = !!kycData;
+  const credential = credentials[0];
 
-  const getAuthMethodLabel = () => {
-    switch (authMethod) {
-      case 'metamask':
-        return 'Metamask';
-      case 'biometric':
-        return 'Biometría';
-      case 'email':
-        return 'Email';
-      default:
-        return 'Desconocido';
-    }
-  };
+  // QR data — usa el ID de la credencial o el userId
+  const qrToken = credential?.id
+    ? JSON.stringify({ type: 'ownly_credential', credentialId: credential.id, timestamp: Date.now(), expiresAt: Date.now() + 86400000 })
+    : null;
+  const qrUrl = qrToken
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrToken)}`
+    : null;
 
-  const getAuthMethodIcon = () => {
-    switch (authMethod) {
-      case 'metamask':
-        return <Wallet className="w-5 h-5" />;
-      case 'biometric':
-        return <Lock className="w-5 h-5" />;
-      case 'email':
-        return <User className="w-5 h-5" />;
-      default:
-        return <Shield className="w-5 h-5" />;
-    }
+  const handleCopy = () => {
+    if (qrToken) { navigator.clipboard.writeText(qrToken); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
 
   return (
     <div className="min-h-screen" style={{ background: '#070510' }}>
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-2" style={{ color: '#F0EAFF' }}>
-            Mi Panel
-          </h1>
-          <p style={{ color: 'rgba(240,234,255,0.5)' }}>
-            Bienvenido a tu identidad digital verificada
-          </p>
-        </div>
+      <div className="max-w-lg mx-auto px-4 py-8">
 
-        {/* User Info Card */}
-        <div className="rounded-2xl p-8 mb-12"
-          style={{ background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.2)' }}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold" style={{ color: '#F0EAFF' }}>
-              Información de Usuario
-            </h2>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg"
-              style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-              {getAuthMethodIcon()}
-              <span style={{ color: '#34D399', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                {getAuthMethodLabel()}
-              </span>
-            </div>
+        {/* Estado de identidad — hero */}
+        {kycLoading ? (
+          <div className="rounded-2xl p-8 mb-6 text-center animate-pulse"
+            style={{ background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.15)' }}>
+            <div className="w-16 h-16 rounded-full mx-auto mb-4" style={{ background: 'rgba(183,148,246,0.1)' }} />
+            <div className="h-4 rounded mx-auto w-32" style={{ background: 'rgba(183,148,246,0.1)' }} />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* User ID */}
-            <div>
-              <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                ID de Usuario
-              </p>
-              <p className="font-mono" style={{ color: '#F0EAFF', wordBreak: 'break-all' }}>
-                {user?.id || user?.address || user?.email}
-              </p>
+        ) : isVerified ? (
+          /* ── VERIFICADO ── */
+          <div className="rounded-2xl p-8 mb-6 text-center"
+            style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.08), rgba(7,5,16,0.9))', border: '1px solid rgba(52,211,153,0.25)' }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'rgba(52,211,153,0.15)', border: '2px solid rgba(52,211,153,0.4)' }}>
+              <CheckCircle className="w-8 h-8" style={{ color: '#34D399' }} />
             </div>
-
-            {/* Auth Method */}
-            <div>
-              <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                Método de Autenticación
-              </p>
-              <p style={{ color: '#F0EAFF' }}>
-                {getAuthMethodLabel()}
-              </p>
-            </div>
-
-            {/* Login Time */}
-            <div>
-              <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                Hora de Inicio de Sesión
-              </p>
-              <p style={{ color: '#F0EAFF' }}>
-                {new Date(user?.loginTime).toLocaleString('es-ES')}
-              </p>
-            </div>
-
-            {/* Verification Status */}
-            <div>
-              <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                Estado de Verificación
-              </p>
-              {kycLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: 'rgba(240,234,255,0.3)' }} />
-                  <p style={{ color: 'rgba(240,234,255,0.5)' }}>Comprobando...</p>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ background: kycData ? '#34D399' : '#FBBF24' }} />
-                  <p style={{ color: kycData ? '#34D399' : '#FBBF24' }}>
-                    {kycData ? 'KYC Verificado' : 'Pendiente de verificación'}
-                  </p>
-                </div>
-              )}
-            </div>
+            <h2 className="text-xl font-bold mb-1" style={{ color: '#34D399' }}>Identidad verificada</h2>
+            <p className="text-sm mb-6" style={{ color: 'rgba(240,234,255,0.5)' }}>
+              {kycData.first_name} {kycData.last_name}
+            </p>
+            <button
+              onClick={() => setShowQRModal(true)}
+              className="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510', boxShadow: '0 0 30px rgba(183,148,246,0.3)' }}>
+              <QrCode className="w-6 h-6" />
+              Mostrar QR
+            </button>
           </div>
-        </div>
-
-        {/* KYC Data */}
-        {kycData && (
-          <div className="rounded-2xl p-8 mb-12"
-            style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.2)' }}>
-            <h2 className="text-2xl font-bold mb-6" style={{ color: '#F0EAFF' }}>
-              Datos de Verificación KYC
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                  Email
-                </p>
-                <p style={{ color: '#F0EAFF' }}>{kycData.email}</p>
-              </div>
-
-              <div>
-                <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                  Nombre
-                </p>
-                <p style={{ color: '#F0EAFF' }}>
-                  {kycData.first_name} {kycData.last_name}
-                </p>
-              </div>
-
-              <div>
-                <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                  Estado
-                </p>
-                <p style={{ color: '#34D399', textTransform: 'capitalize' }}>
-                  {kycData.status}
-                </p>
-              </div>
-
-              <div>
-                <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                  Fecha de Verificación
-                </p>
-                <p style={{ color: '#F0EAFF' }}>
-                  {new Date(kycData.created_at).toLocaleDateString('es-ES')}
-                </p>
-              </div>
+        ) : (
+          /* ── NO VERIFICADO ── */
+          <div className="rounded-2xl p-8 mb-6 text-center"
+            style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)' }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'rgba(251,191,36,0.1)', border: '2px solid rgba(251,191,36,0.3)' }}>
+              <Clock className="w-8 h-8" style={{ color: '#FBBF24' }} />
             </div>
+            <h2 className="text-xl font-bold mb-1" style={{ color: '#FBBF24' }}>Identidad no verificada</h2>
+            <p className="text-sm mb-6" style={{ color: 'rgba(240,234,255,0.5)' }}>
+              Verifica tu identidad para obtener tu QR de acceso
+            </p>
+            <button
+              onClick={() => navigate('/kyc')}
+              className="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #FBBF24, #F59E0B)', color: '#070510' }}>
+              Verificar identidad (2 min)
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Credentials */}
-          <div className="rounded-2xl p-6"
-            style={{ background: 'rgba(96,165,250,0.04)', border: '1px solid rgba(96,165,250,0.2)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 style={{ color: '#F0EAFF', fontWeight: 'bold' }}>Credenciales</h3>
-              <Shield className="w-5 h-5" style={{ color: '#60A5FA' }} />
-            </div>
-            <p className="text-3xl font-bold" style={{ color: '#60A5FA' }}>
-              {credLoading ? <span className="animate-pulse">—</span> : credentials.length}
-            </p>
-            <p style={{ color: 'rgba(96,165,250,0.7)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-              Credenciales verificadas
-            </p>
-          </div>
-
-          {/* Documents */}
-          <div className="rounded-2xl p-6"
-            style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.2)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 style={{ color: '#F0EAFF', fontWeight: 'bold' }}>Documentos</h3>
-              <FileText className="w-5 h-5" style={{ color: '#34D399' }} />
-            </div>
-            <p className="text-3xl font-bold" style={{ color: '#34D399' }}>
-              {docLoading ? <span className="animate-pulse">—</span> : documents.length}
-            </p>
-            <p style={{ color: 'rgba(52,211,153,0.7)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-              Documentos encriptados
-            </p>
-          </div>
-
-          {/* Security */}
-          <div className="rounded-2xl p-6"
-            style={{ background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.2)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 style={{ color: '#F0EAFF', fontWeight: 'bold' }}>Seguridad</h3>
-              <Lock className="w-5 h-5" style={{ color: '#B794F6' }} />
-            </div>
-            <p className="text-3xl font-bold" style={{ color: '#B794F6' }}>
-              ✓
-            </p>
-            <p style={{ color: 'rgba(183,148,246,0.7)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-              Encriptación AES-256
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
-            onClick={() => navigate('/kyc')}
-            className="rounded-xl p-6 transition-all hover:shadow-lg text-left cursor-pointer"
-            style={{ background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.2)' }}
-          >
-            <Shield className="w-6 h-6 mb-3" style={{ color: '#B794F6' }} />
-            <h3 className="font-semibold mb-1" style={{ color: '#F0EAFF' }}>Verificación KYC</h3>
-            <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem' }}>
-              Completa tu verificación de identidad
+        {/* Accesos rápidos */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button onClick={() => navigate('/credentials')}
+            className="rounded-xl p-4 text-left transition-all active:scale-95"
+            style={{ background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.15)' }}>
+            <Shield className="w-5 h-5 mb-2" style={{ color: '#60A5FA' }} />
+            <p className="font-semibold text-sm" style={{ color: '#F0EAFF' }}>Credenciales</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(96,165,250,0.7)' }}>
+              {credLoading ? '—' : `${credentials.length} activa${credentials.length !== 1 ? 's' : ''}`}
             </p>
           </button>
 
-          <button
-            onClick={() => navigate('/credentials')}
-            className="rounded-xl p-6 transition-all hover:shadow-lg text-left cursor-pointer"
-            style={{ background: 'rgba(96,165,250,0.04)', border: '1px solid rgba(96,165,250,0.2)' }}
-          >
-            <Shield className="w-6 h-6 mb-3" style={{ color: '#60A5FA' }} />
-            <h3 className="font-semibold mb-1" style={{ color: '#F0EAFF' }}>Mis Credenciales</h3>
-            <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem' }}>
-              Visualiza tus credenciales verificadas
-            </p>
-          </button>
-
-          <button
-            onClick={() => navigate('/documents')}
-            className="rounded-xl p-6 transition-all hover:shadow-lg text-left cursor-pointer"
-            style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.2)' }}
-          >
-            <FileText className="w-6 h-6 mb-3" style={{ color: '#34D399' }} />
-            <h3 className="font-semibold mb-1" style={{ color: '#F0EAFF' }}>Mis Documentos</h3>
-            <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '0.875rem' }}>
-              Gestiona tus documentos encriptados
+          <button onClick={() => navigate('/documents')}
+            className="rounded-xl p-4 text-left transition-all active:scale-95"
+            style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
+            <FileText className="w-5 h-5 mb-2" style={{ color: '#34D399' }} />
+            <p className="font-semibold text-sm" style={{ color: '#F0EAFF' }}>Documentos</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(52,211,153,0.7)' }}>
+              {`${documents.length} guardado${documents.length !== 1 ? 's' : ''}`}
             </p>
           </button>
         </div>
+
+        {/* KYC pendiente CTA secundario */}
+        {!isVerified && !kycLoading && (
+          <button onClick={() => navigate('/kyc')}
+            className="w-full rounded-xl p-4 flex items-center justify-between transition-all active:scale-95"
+            style={{ background: 'rgba(183,148,246,0.04)', border: '1px solid rgba(183,148,246,0.15)' }}>
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5" style={{ color: '#B794F6' }} />
+              <div className="text-left">
+                <p className="text-sm font-semibold" style={{ color: '#F0EAFF' }}>Verificación KYC</p>
+                <p className="text-xs" style={{ color: 'rgba(240,234,255,0.4)' }}>Completa tu identidad digital</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4" style={{ color: 'rgba(183,148,246,0.5)' }} />
+          </button>
+        )}
       </div>
+
+      {/* ── MODAL QR (pantalla completa) ── */}
+      {showQRModal && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
+          style={{ background: '#070510' }}>
+
+          {/* Cerrar */}
+          <button onClick={() => setShowQRModal(false)}
+            className="absolute top-6 right-6 p-2 rounded-full"
+            style={{ background: 'rgba(183,148,246,0.1)', color: '#B794F6' }}>
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="text-center w-full max-w-sm">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <CheckCircle className="w-5 h-5" style={{ color: '#34D399' }} />
+              <h2 className="text-lg font-bold" style={{ color: '#F0EAFF' }}>Tu identidad está lista</h2>
+            </div>
+            <p className="text-sm mb-6" style={{ color: 'rgba(240,234,255,0.5)' }}>
+              Estás compartiendo: <span style={{ color: '#34D399' }}>✓ Mayor de 18 años &nbsp; ✓ Identidad verificada</span>
+            </p>
+
+            {/* QR */}
+            {qrUrl ? (
+              <div className="rounded-2xl p-4 mb-6 mx-auto inline-block"
+                style={{ background: 'white' }}>
+                <img src={qrUrl} alt="QR Ownly" style={{ width: 260, height: 260, display: 'block' }} />
+              </div>
+            ) : (
+              <div className="rounded-2xl p-8 mb-6 text-center"
+                style={{ background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.2)' }}>
+                <QrCode className="w-16 h-16 mx-auto mb-3" style={{ color: 'rgba(183,148,246,0.4)' }} />
+                <p className="text-sm" style={{ color: 'rgba(240,234,255,0.5)' }}>
+                  Completa el KYC para activar tu QR
+                </p>
+              </div>
+            )}
+
+            <p className="text-xs mb-6" style={{ color: 'rgba(240,234,255,0.3)' }}>
+              Muestra este código al staff para verificar tu acceso
+            </p>
+
+            <button onClick={handleCopy}
+              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+              style={{ background: 'rgba(183,148,246,0.1)', color: '#B794F6', border: '1px solid rgba(183,148,246,0.2)' }}>
+              {copied ? <><Check className="w-4 h-4" /> Copiado</> : <><Copy className="w-4 h-4" /> Copiar código</>}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

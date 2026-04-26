@@ -110,10 +110,8 @@ export function AuthProvider({ children }) {
 
   const loginWithEmail = useCallback(async (email, password) => {
     try {
-      // Validaciones básicas
       if (!email || !password) throw new Error('Email y contraseña requeridos');
 
-      // Cargar usuarios registrados del localStorage
       const usersDB = JSON.parse(localStorage.getItem('ownly_users_db') || '{}');
       const stored = usersDB[email.toLowerCase()];
 
@@ -121,7 +119,6 @@ export function AuthProvider({ children }) {
         throw new Error('No existe una cuenta con ese email. Regístrate primero.');
       }
 
-      // Verificar contraseña con hash
       const hash = await hashPassword(password, stored.salt);
       if (hash !== stored.passwordHash) {
         throw new Error('Contraseña incorrecta.');
@@ -150,13 +147,13 @@ export function AuthProvider({ children }) {
     try {
       if (!email || !password) throw new Error('Email y contraseña requeridos');
 
+      // Intentar cargar desde localStorage (mismo dispositivo/navegador)
       const usersDB = JSON.parse(localStorage.getItem('ownly_users_db') || '{}');
 
       if (usersDB[email.toLowerCase()]) {
         throw new Error('Ya existe una cuenta con ese email.');
       }
 
-      // Generar salt y hash de la contraseña
       const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map(b => b.toString(16).padStart(2, '0')).join('');
       const passwordHash = await hashPassword(password, salt);
@@ -164,7 +161,6 @@ export function AuthProvider({ children }) {
       usersDB[email.toLowerCase()] = { passwordHash, salt, createdAt: new Date().toISOString() };
       localStorage.setItem('ownly_users_db', JSON.stringify(usersDB));
 
-      // Login automático tras registro
       const userData = {
         id: email,
         email: email,
