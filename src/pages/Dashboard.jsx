@@ -1,10 +1,10 @@
 /**
- * Dashboard — QR como core del producto
- * Flujo: estado → mostrar QR → usar en acceso
+ * Dashboard — Ownly ID como core del producto
+ * Contexto: trading, prop firms, brokers
  */
 
 import { useState, useEffect } from 'react';
-import { Shield, FileText, QrCode, CheckCircle, Clock, ChevronRight, Copy, Check, X } from 'lucide-react';
+import { Shield, FileText, QrCode, CheckCircle, Clock, ChevronRight, Copy, Check, X, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useCredentials } from '@/hooks/useCredentials';
@@ -70,23 +70,57 @@ export default function Dashboard() {
           </div>
         ) : isVerified ? (
           /* ── VERIFICADO ── */
-          <div className="rounded-2xl p-8 mb-6 text-center"
+          <div className="rounded-2xl p-8 mb-6"
             style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.08), rgba(7,5,16,0.9))', border: '1px solid rgba(52,211,153,0.25)' }}>
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ background: 'rgba(52,211,153,0.15)', border: '2px solid rgba(52,211,153,0.4)' }}>
-              <CheckCircle className="w-8 h-8" style={{ color: '#34D399' }} />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(52,211,153,0.15)', border: '2px solid rgba(52,211,153,0.4)' }}>
+                <CheckCircle className="w-6 h-6" style={{ color: '#34D399' }} />
+              </div>
+              <div>
+                <h2 className="font-bold" style={{ color: '#34D399' }}>Identidad verificada</h2>
+                <p className="text-sm" style={{ color: 'rgba(240,234,255,0.5)' }}>
+                  {kycData.first_name} {kycData.last_name}
+                </p>
+              </div>
             </div>
-            <h2 className="text-xl font-bold mb-1" style={{ color: '#34D399' }}>Identidad verificada</h2>
-            <p className="text-sm mb-6" style={{ color: 'rgba(240,234,255,0.5)' }}>
-              {kycData.first_name} {kycData.last_name}
-            </p>
-            <button
-              onClick={() => setShowQRModal(true)}
-              className="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510', boxShadow: '0 0 30px rgba(183,148,246,0.3)' }}>
-              <QrCode className="w-6 h-6" />
-              Mostrar QR
-            </button>
+
+            {/* Ownly ID — el activo principal */}
+            <div className="rounded-xl p-4 mb-5"
+              style={{ background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.2)' }}>
+              <p className="text-xs font-semibold mb-1" style={{ color: 'rgba(183,148,246,0.6)' }}>TU OWNLY ID</p>
+              <div className="flex items-center justify-between gap-2">
+                <code className="text-sm font-mono truncate" style={{ color: '#F0EAFF' }}>
+                  {user?.email || user?.address || user?.id}
+                </code>
+                <button onClick={() => {
+                  navigator.clipboard.writeText(user?.email || user?.address || user?.id || '');
+                  setCopied(true); setTimeout(() => setCopied(false), 2000);
+                }} className="shrink-0 p-1.5 rounded-lg" style={{ background: 'rgba(183,148,246,0.1)', color: '#B794F6' }}>
+                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <p className="text-xs mt-2" style={{ color: 'rgba(240,234,255,0.3)' }}>
+                Comparte este ID con plataformas para verificación instantánea
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowQRModal(true)}
+                className="py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510' }}>
+                <QrCode className="w-4 h-4" />
+                Mostrar QR
+              </button>
+              <button
+                onClick={() => navigate('/verify')}
+                className="py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
+                <TrendingUp className="w-4 h-4" />
+                Verificador
+              </button>
+            </div>
           </div>
         ) : (
           /* ── NO VERIFICADO ── */
@@ -96,9 +130,9 @@ export default function Dashboard() {
               style={{ background: 'rgba(251,191,36,0.1)', border: '2px solid rgba(251,191,36,0.3)' }}>
               <Clock className="w-8 h-8" style={{ color: '#FBBF24' }} />
             </div>
-            <h2 className="text-xl font-bold mb-1" style={{ color: '#FBBF24' }}>Identidad no verificada</h2>
+            <h2 className="text-xl font-bold mb-1" style={{ color: '#FBBF24' }}>Sin verificar</h2>
             <p className="text-sm mb-6" style={{ color: 'rgba(240,234,255,0.5)' }}>
-              Verifica tu identidad para obtener tu QR de acceso
+              Verifica tu identidad una vez y úsala en cualquier plataforma
             </p>
             <button
               onClick={() => navigate('/kyc')}
