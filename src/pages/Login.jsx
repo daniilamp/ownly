@@ -154,14 +154,10 @@ export default function Login() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-6 animate-float">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{ background: 'rgba(183,148,246,0.12)', border: '1px solid rgba(183,148,246,0.25)' }}>
-                <Shield className="w-7 h-7" style={{ color: '#B794F6' }} />
-              </div>
-              <span className="font-bold text-3xl tracking-tight gradient-text">OWNLY</span>
+              <img src="/logo.png" alt="Ownly" className="w-16 h-16 rounded-2xl object-cover" />
             </div>
             <h1 className="text-4xl font-bold mb-3" style={{ color: '#F0EAFF' }}>
-              Bienvenido
+              Bienvenido a Ownly
             </h1>
             <p style={{ color: 'rgba(240,234,255,0.5)', fontSize: '1.1rem' }}>
               Accede a tu identidad digital verificada
