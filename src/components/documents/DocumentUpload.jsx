@@ -23,6 +23,7 @@ const DOCUMENT_TYPES = [
 
 export default function DocumentUpload({ onUpload, onCancel }) {
   const [documentType, setDocumentType] = useState('dni');
+  const [title, setTitle] = useState('');
   const [file, setFile] = useState(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -53,6 +54,11 @@ export default function DocumentUpload({ onUpload, onCancel }) {
       return;
     }
 
+    if (!title.trim()) {
+      setError('Por favor añade un título al documento');
+      return;
+    }
+
     if (!password) {
       setError('Por favor ingresa una contraseña');
       return;
@@ -77,6 +83,7 @@ export default function DocumentUpload({ onUpload, onCancel }) {
       // Call onUpload with file data
       await onUpload({
         documentType,
+        title: title.trim(),
         fileName: file.name,
         fileSize: file.size,
         mimeType: file.type,
@@ -115,6 +122,26 @@ export default function DocumentUpload({ onUpload, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Title — obligatorio */}
+      <div>
+        <label className="block text-sm font-medium mb-2" style={{ color: '#F0EAFF' }}>
+          Título del documento <span style={{ color: '#F87171' }}>*</span>
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Ej: DNI frontal, Contrato alquiler, Título universidad..."
+          className="w-full px-4 py-3 rounded-xl outline-none transition-all"
+          style={{
+            background: 'rgba(183,148,246,0.06)',
+            border: '1px solid rgba(183,148,246,0.2)',
+            color: '#F0EAFF',
+          }}
+          disabled={loading}
+        />
+      </div>
+
       {/* Document Type */}
       <div>
         <label className="block text-sm font-medium mb-2" style={{ color: '#F0EAFF' }}>

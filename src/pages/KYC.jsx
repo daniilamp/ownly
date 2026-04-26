@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Shield, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Shield, CheckCircle, Clock, AlertCircle, QrCode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useKYC } from '@/hooks/useKYC';
 import PersonalDataForm from '@/components/kyc/PersonalDataForm';
@@ -178,38 +178,37 @@ export default function KYC() {
 
           {/* Step 3: Completed */}
           {step === STEPS.COMPLETED && (
-            <div className="text-center">
-              <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center"
+            <div className="text-center py-4">
+              <div className="flex justify-center mb-5">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center"
                   style={{ background: 'rgba(52,211,153,0.12)', border: '2px solid rgba(52,211,153,0.4)' }}>
-                  <CheckCircle className="w-8 h-8" style={{ color: '#34D399' }} />
+                  <CheckCircle className="w-10 h-10" style={{ color: '#34D399' }} />
                 </div>
               </div>
               <h2 className="text-2xl font-bold mb-2" style={{ color: '#34D399' }}>
-                ¡Verificación Completada!
+                ✔ Identidad verificada
               </h2>
-              <p className="mb-6" style={{ color: 'rgba(240,234,255,0.6)' }}>
-                Tu identidad ha sido verificada exitosamente. Tu credencial digital está lista.
+              <p className="text-lg font-semibold mb-1" style={{ color: '#F0EAFF' }}>
+                Tu Ownly ID está lista
               </p>
-              <div className="rounded-xl p-4 mb-6"
-                style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)' }}>
-                <p className="text-sm" style={{ color: 'rgba(52,211,153,0.8)' }}>
-                  <strong>Email:</strong> {userData?.email}
-                </p>
-                <p className="text-sm mt-2" style={{ color: 'rgba(52,211,153,0.8)' }}>
-                  <strong>Nombre:</strong> {userData?.firstName} {userData?.lastName}
-                </p>
+              <p className="text-sm mb-8" style={{ color: 'rgba(240,234,255,0.5)' }}>
+                {userData?.firstName} {userData?.lastName}
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510', boxShadow: '0 0 30px rgba(183,148,246,0.3)' }}>
+                  <QrCode className="w-6 h-6" />
+                  Mostrar QR
+                </button>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                  style={{ background: 'rgba(183,148,246,0.08)', color: '#B794F6', border: '1px solid rgba(183,148,246,0.2)' }}>
+                  Usar en acceso →
+                </button>
               </div>
-              <button
-                onClick={() => navigate('/credentials')}
-                className="inline-block px-6 py-3 rounded-xl font-semibold text-sm transition-all"
-                style={{
-                  background: 'linear-gradient(135deg, #B794F6, #7C3AED)',
-                  color: '#070510',
-                }}
-              >
-                Ver mis credenciales →
-              </button>
             </div>
           )}
 
