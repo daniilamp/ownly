@@ -1,7 +1,8 @@
-import { Trash2, Eye, Lock, Share2, X, QrCode, Copy, Check, Link2, Ban, Clock } from 'lucide-react';
+import { Trash2, Eye, Lock, Share2, X, QrCode, Copy, Check, Link2, Ban, Clock, KeyRound, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useSharedAccess } from '@/hooks/useSharedAccess';
+import { decryptDocument, base64ToArrayBuffer } from '@/utils/encryption';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -26,15 +27,40 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
   const [confirmId, setConfirmId] = useState(null);
   const [shareDoc, setShareDoc] = useState(null);
   const [shareExpiry, setShareExpiry] = useState('10min');
-  const [activeShare, setActiveShare] = useState(null); // access object after creation
+  const [sharePassword, setSharePassword] = useState('');
+  const [shareError, setShareError] = useState(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [activeShare, setActiveShare] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showAccesses, setShowAccesses] = useState(false);
 
   const { accesses, createAccess, revokeAccess } = useSharedAccess();
 
-  const handleShare = () => {
-    const access = createAccess(shareDoc, shareExpiry);
-    setActiveShare(access);
+  const handleShare = async () => {
+    if (!sharePassword) { setShareError('Introduce la contraseña del documento'); return; }
+    setShareLoading(true);
+    setShareError(null);
+    try {
+      // Desencriptar el documento con la contraseña del propietario
+      const encryptedData = base64ToArrayBuffer(shareDoc.encryptedData);
+      const iv = base64ToArrayBuffer(shareDoc.iv);
+      const salt = base64ToArrayBuffer(shareDoc.salt);
+      const decrypted = await decryptDocument(encryptedData, sharePassword, iv, salt);
+
+      // Convertir a base64 para almacenar
+      const bytes = new Uint8Array(decrypted);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+      const base64Content = btoa(binary);
+
+      const access = createAccess(shareDoc, shareExpiry, base64Content);
+      setActiveShare(access);
+      setSharePassword('');
+    } catch {
+      setShareError('Contraseña incorrecta');
+    } finally {
+      setShareLoading(false);
+    }
   };
 
   const shareLink = activeShare ? `${BASE_URL}/access/${activeShare.id}` : '';
@@ -48,7 +74,7 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const closeShareModal = () => { setShareDoc(null); setActiveShare(null); setCopiedLink(false); };
+  const closeShareModal = () => { setShareDoc(null); setActiveShare(null); setCopiedLink(false); setSharePassword(''); setShareError(null); };
 
   if (loading) return (
     <div className="text-center py-12">
@@ -188,7 +214,7 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
               <>
                 {/* Duración */}
                 <p className="text-xs mb-2" style={{ color: 'rgba(240,234,255,0.4)' }}>Duración del acceso:</p>
-                <div className="flex gap-2 mb-5">
+                <div className="flex gap-2 mb-4">
                   {[{ v: '10min', l: '10 min' }, { v: '1h', l: '1 hora' }, { v: '24h', l: '24 horas' }].map(({ v, l }) => (
                     <button key={v} onClick={() => setShareExpiry(v)}
                       className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
@@ -201,11 +227,27 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
                     </button>
                   ))}
                 </div>
-                <button onClick={handleShare}
-                  className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+
+                {/* Contraseña para desencriptar */}
+                <p className="text-xs mb-2" style={{ color: 'rgba(240,234,255,0.4)' }}>
+                  <KeyRound className="w-3 h-3 inline mr-1" />
+                  Contraseña del documento para compartir:
+                </p>
+                <input
+                  type="password"
+                  value={sharePassword}
+                  onChange={e => { setSharePassword(e.target.value); setShareError(null); }}
+                  placeholder="Contraseña de encriptación"
+                  className="w-full px-4 py-3 rounded-xl outline-none mb-3"
+                  style={{ background: 'rgba(183,148,246,0.06)', border: `1px solid ${shareError ? 'rgba(248,113,113,0.4)' : 'rgba(183,148,246,0.2)'}`, color: '#F0EAFF' }}
+                  onKeyDown={e => e.key === 'Enter' && handleShare()}
+                />
+                {shareError && <p className="text-xs mb-3" style={{ color: '#F87171' }}>{shareError}</p>}
+
+                <button onClick={handleShare} disabled={shareLoading}
+                  className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510' }}>
-                  <QrCode className="w-4 h-4" />
-                  Generar link y QR
+                  {shareLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Preparando...</> : <><QrCode className="w-4 h-4" /> Generar link y QR</>}
                 </button>
               </>
             ) : (
