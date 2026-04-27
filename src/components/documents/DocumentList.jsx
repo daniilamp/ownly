@@ -115,9 +115,11 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
                 style={{ background: 'rgba(96,165,250,0.1)', color: '#60A5FA' }} title="Ver">
                 <Eye className="w-4 h-4" />
               </button>
-              <button onClick={() => { setShareDoc(doc); setActiveShare(null); }} className="p-2 rounded-lg"
-                style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399' }} title="Compartir">
-                <Share2 className="w-4 h-4" />
+              <button onClick={() => { setShareDoc(doc); setActiveShare(null); }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
+                style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
+                <Share2 className="w-3.5 h-3.5" />
+                Compartir
               </button>
               <button onClick={() => setConfirmId(doc.id)} className="p-2 rounded-lg"
                 style={{ background: 'rgba(248,113,113,0.1)', color: '#F87171' }} title="Eliminar">
