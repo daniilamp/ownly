@@ -123,6 +123,10 @@ export function AuthProvider({ children }) {
       localStorage.setItem('ownly_user', JSON.stringify(userData));
       localStorage.setItem('ownly_auth_method', 'email');
       localStorage.setItem('ownly_userId', data.email);
+      // Save JWT token for authenticated API calls
+      if (data.token) {
+        localStorage.setItem('ownly_token', data.token);
+      }
 
       return userData;
     } catch (err) {
@@ -189,6 +193,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('ownly_user');
     localStorage.removeItem('ownly_auth_method');
     localStorage.removeItem('ownly_userId');
+    localStorage.removeItem('ownly_token');
   }, []);
 
   const isAuthenticated = !!user;

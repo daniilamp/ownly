@@ -7,6 +7,18 @@ import { useState, useCallback } from 'react';
 
 const API_URL = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
 
+/**
+ * Get auth headers with JWT token if available
+ */
+function getAuthHeaders() {
+  const token = localStorage.getItem('ownly_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export function useKYC() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,7 +36,7 @@ export function useKYC() {
     try {
       const response = await fetch(`${API_URL}/api/kyc/init`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(userData),
       });
 
@@ -58,7 +70,9 @@ export function useKYC() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/kyc/status/${appId}`);
+      const response = await fetch(`${API_URL}/api/kyc/status/${appId}`, {
+        headers: getAuthHeaders(),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to get status');
@@ -82,7 +96,9 @@ export function useKYC() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/kyc/user/${userId}`);
+      const response = await fetch(`${API_URL}/api/kyc/user/${userId}`, {
+        headers: getAuthHeaders(),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to get user KYC data');
