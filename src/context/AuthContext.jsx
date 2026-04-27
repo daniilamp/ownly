@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [authMethod, setAuthMethod] = useState(null); // 'metamask', 'biometric', 'email'
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [userRole, setUserRole] = useState('user'); // 'user', 'business', 'admin'
 
   // Check if user is already logged in
   useEffect(() => {
@@ -24,10 +25,12 @@ export function AuthProvider({ children }) {
       // Check localStorage for existing session
       const storedUser = localStorage.getItem('ownly_user');
       const storedAuthMethod = localStorage.getItem('ownly_auth_method');
+      const storedRole = localStorage.getItem('ownly_role');
       
       if (storedUser) {
         setUser(JSON.parse(storedUser));
         setAuthMethod(storedAuthMethod);
+        setUserRole(storedRole || 'user'); // Default to 'user' if no role stored
       }
 
       // Check if biometric is available
@@ -53,8 +56,10 @@ export function AuthProvider({ children }) {
 
       setUser(userData);
       setAuthMethod('metamask');
+      setUserRole('user'); // Metamask users are regular users
       localStorage.setItem('ownly_user', JSON.stringify(userData));
       localStorage.setItem('ownly_auth_method', 'metamask');
+      localStorage.setItem('ownly_role', 'user');
       localStorage.setItem('ownly_userId', address); // For KYC compatibility
 
       return userData;
@@ -120,9 +125,11 @@ export function AuthProvider({ children }) {
 
       setUser(userData);
       setAuthMethod('email');
+      setUserRole(data.role || 'user'); // Get role from backend
       localStorage.setItem('ownly_user', JSON.stringify(userData));
       localStorage.setItem('ownly_auth_method', 'email');
       localStorage.setItem('ownly_userId', data.email);
+      localStorage.setItem('ownly_role', data.role || 'user');
       // Save JWT token for authenticated API calls
       if (data.token) {
         localStorage.setItem('ownly_token', data.token);
@@ -190,10 +197,12 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     setUser(null);
     setAuthMethod(null);
+    setUserRole('user');
     localStorage.removeItem('ownly_user');
     localStorage.removeItem('ownly_auth_method');
     localStorage.removeItem('ownly_userId');
     localStorage.removeItem('ownly_token');
+    localStorage.removeItem('ownly_role');
   }, []);
 
   const isAuthenticated = !!user;
@@ -206,6 +215,7 @@ export function AuthProvider({ children }) {
         authMethod,
         biometricAvailable,
         isAuthenticated,
+        userRole,
         loginWithMetamask,
         loginWithBiometric,
         loginWithEmail,

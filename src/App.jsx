@@ -28,7 +28,7 @@ export default function App() {
 }
 
 function AppContent() {
-  const { isAuthenticated, loading, logout } = useAuth();
+  const { isAuthenticated, loading, logout, userRole } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -41,6 +41,11 @@ function AppContent() {
   }
 
   const handleLogout = () => { logout(); navigate('/login'); setMenuOpen(false); };
+
+  // Role-based navigation visibility
+  const canAccessKYC = userRole === 'user' || userRole === 'admin';
+  const canAccessVerifier = userRole === 'business' || userRole === 'admin';
+  const canAccessAdmin = userRole === 'admin';
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: '#070510' }}>
@@ -56,10 +61,10 @@ function AppContent() {
           <nav className="hidden md:flex items-center gap-6">
             {isAuthenticated ? (
               <>
-                <Link to="/kyc" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificación KYC</Link>
-                <Link to="/credentials" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Credenciales</Link>
-                <Link to="/documents" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>
-                <Link to="/verify" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>
+                {canAccessKYC && <Link to="/kyc" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificación KYC</Link>}
+                {canAccessKYC && <Link to="/credentials" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Credenciales</Link>}
+                {canAccessKYC && <Link to="/documents" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>}
+                {canAccessVerifier && <Link to="/verify" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>}
                 <button onClick={handleLogout} className="text-sm font-semibold px-3 py-1.5 rounded-lg transition-all"
                   style={{ color: '#F87171', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
                   Salir
@@ -67,7 +72,6 @@ function AppContent() {
               </>
             ) : (
               <>
-                <Link to="/verify" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>
                 <Link to="/login" className="text-sm font-semibold px-4 py-2 rounded-lg transition-all"
                   style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510' }}>
                   Iniciar Sesión
@@ -89,15 +93,14 @@ function AppContent() {
             style={{ borderColor: 'rgba(183,148,246,0.15)', background: 'rgba(7,5,16,0.98)' }}>
             {isAuthenticated ? (
               <>
-                <Link to="/kyc" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificación KYC</Link>
-                <Link to="/credentials" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Credenciales</Link>
-                <Link to="/documents" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>
-                <Link to="/verify" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>
+                {canAccessKYC && <Link to="/kyc" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificación KYC</Link>}
+                {canAccessKYC && <Link to="/credentials" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Credenciales</Link>}
+                {canAccessKYC && <Link to="/documents" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>}
+                {canAccessVerifier && <Link to="/verify" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>}
                 <button onClick={handleLogout} className="text-sm font-semibold py-2 text-left" style={{ color: '#F87171' }}>Salir</button>
               </>
             ) : (
               <>
-                <Link to="/verify" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: '#B794F6' }}>Iniciar Sesión</Link>
               </>
             )}
@@ -110,10 +113,10 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
-        <Route path="/kyc" element={isAuthenticated ? <KYC /> : <Navigate to="/login" />} />
-        <Route path="/credentials" element={isAuthenticated ? <Credentials /> : <Navigate to="/login" />} />
-        <Route path="/documents" element={isAuthenticated ? <Documents /> : <Navigate to="/login" />} />
-        <Route path="/verify" element={<Verify />} />
+        <Route path="/kyc" element={isAuthenticated && canAccessKYC ? <KYC /> : <Navigate to="/login" />} />
+        <Route path="/credentials" element={isAuthenticated && canAccessKYC ? <Credentials /> : <Navigate to="/login" />} />
+        <Route path="/documents" element={isAuthenticated && canAccessKYC ? <Documents /> : <Navigate to="/login" />} />
+        <Route path="/verify" element={isAuthenticated && canAccessVerifier ? <Verify /> : <Navigate to="/login" />} />
         <Route path="/access/:accessId" element={<Access />} />
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
         <Route path="*" element={<NotFound />} />
