@@ -67,9 +67,10 @@ export async function enrichRequestWithRole(req) {
       // Try to find user by Supabase ID
       userRecord = await getUserBySupabaseId(req.user.id);
       
-      // If not found, try by email
+      // If not found by Supabase ID, try by email
       if (!userRecord && req.user.email) {
-        userRecord = await getUserById(req.user.email);
+        const { getUserByEmail } = await import('../services/userService.js');
+        userRecord = await getUserByEmail(req.user.email);
       }
     }
 
