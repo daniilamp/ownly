@@ -38,7 +38,7 @@
   - Mark task complete when tests are written, run, and passing on unfixed code
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [-] 3. Fix for Ownly ID verification inconsistency (Approach A: Add ownly_id field to database)
+- [x] 3. Fix for Ownly ID verification inconsistency (Approach A: Add ownly_id field to database)
 
   - [x] 3.1 Add ownly_id column to kyc_verifications table
     - Create database migration or modify schema.sql
@@ -86,7 +86,7 @@
     - Ensure consistency between `external_user_id` and `ownly_id` fields
     - _Requirements: 2.3_
 
-  - [-] 3.6 Verify bug condition exploration test now passes
+  - [x] 3.6 Verify bug condition exploration test now passes
     - **Property 1: Expected Behavior** - Ownly ID Queries Return Correct Verification Status
     - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
     - The test from task 1 encodes the expected behavior
@@ -98,7 +98,7 @@
     - **EXPECTED OUTCOME**: Test PASSES (confirms bug is fixed)
     - _Requirements: 2.1, 2.2, 2.3_
 
-  - [ ] 3.7 Verify preservation tests still pass
+  - [x] 3.7 Verify preservation tests still pass
     - **Property 2: Preservation** - Email-Based Queries Unchanged
     - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
     - Run preservation property tests from step 2
@@ -109,7 +109,7 @@
     - Confirm all tests still pass after fix (no regressions)
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 4. Checkpoint - Ensure all tests pass
+- [x] 4. Checkpoint - Ensure all tests pass
   - Run complete test suite including exploration and preservation tests
   - Verify all tests pass: bug condition test (now passing), preservation tests (still passing)
   - Verify no regressions in existing functionality

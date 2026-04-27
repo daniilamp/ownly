@@ -1,8 +1,14 @@
 import { Router } from "express";
 import { z } from "zod";
 import { verifyZKProof } from "../services/zkVerifier.js";
+import { verifyApiKey } from "../middleware/authMiddleware.js";
+import { requireBusiness } from "../middleware/rbacMiddleware.js";
 
 export const verifyRouter = Router();
+
+// Middleware: Require API key and BUSINESS or ADMIN role for all verify endpoints
+verifyRouter.use(verifyApiKey);
+verifyRouter.use(requireBusiness);
 
 // ── Input validation schema ───────────────────────────────────────────────────
 const VerifySchema = z.object({

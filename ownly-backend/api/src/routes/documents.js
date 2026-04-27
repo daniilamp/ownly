@@ -2,13 +2,20 @@
  * Document Routes
  * Endpoints for document management
  * Backend stores encrypted blobs only - never decrypts
+ * RBAC: Requires USER or ADMIN role
  */
 
 import { Router } from 'express';
 import { z } from 'zod';
 import * as documentService from '../services/documentService.js';
+import { verifyJWT } from '../middleware/authMiddleware.js';
+import { requireUser } from '../middleware/rbacMiddleware.js';
 
 export const documentRouter = Router();
+
+// Middleware: Require JWT authentication and USER or ADMIN role for all document endpoints
+documentRouter.use(verifyJWT);
+documentRouter.use(requireUser);
 
 // ── POST /api/documents/upload ────────────────────────────────────────────────
 /**

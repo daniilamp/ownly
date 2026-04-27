@@ -9,6 +9,7 @@ CREATE TABLE kyc_verifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   applicant_id VARCHAR(255) UNIQUE NOT NULL,
   external_user_id VARCHAR(255) NOT NULL,
+  ownly_id VARCHAR(255),
   email VARCHAR(255) NOT NULL,
   first_name VARCHAR(255),
   last_name VARCHAR(255),
@@ -47,6 +48,7 @@ CREATE TABLE credentials (
 -- Indexes
 CREATE INDEX idx_kyc_applicant ON kyc_verifications(applicant_id);
 CREATE INDEX idx_kyc_user ON kyc_verifications(external_user_id);
+CREATE INDEX idx_kyc_ownly_id ON kyc_verifications(ownly_id);
 CREATE INDEX idx_kyc_email ON kyc_verifications(email);
 CREATE INDEX idx_kyc_status ON kyc_verifications(status);
 CREATE INDEX idx_cred_kyc ON credentials(kyc_id);

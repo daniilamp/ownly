@@ -120,6 +120,26 @@ apiKeysRouter.delete('/:apiKeyId', async (req, res, next) => {
 });
 
 /**
+ * POST /api/api-keys/:apiKeyId/regenerate
+ * Regenerate an API key — invalidates old key and creates a new one
+ * Returns the new plaintext key only once
+ */
+apiKeysRouter.post('/:apiKeyId/regenerate', async (req, res, next) => {
+  try {
+    const { apiKeyId } = req.params;
+    const result = await apiKeyService.regenerateApiKey(apiKeyId);
+    return res.json({
+      success: true,
+      apiKey: result.apiKey,
+      record: result.record,
+      warning: 'Old API key has been invalidated. Save this new key securely — you will not be able to see it again.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/api-keys/:apiKeyId/usage
  * Get API usage statistics
  * 

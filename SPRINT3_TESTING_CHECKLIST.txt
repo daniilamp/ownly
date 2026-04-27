@@ -1,0 +1,216 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                    🧪 SPRINT 3: TESTING CHECKLIST                             ║
+║                                                                                ║
+║                    Automatic Credential Generation Flow                       ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─ PREREQUISITES ──────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  ☐ Backend running on http://localhost:3001                                  │
+│  ☐ Frontend running on http://localhost:5173                                 │
+│  ☐ Supabase connected                                                        │
+│  ☐ Environment variables configured                                          │
+│                                                                               │
+│  Check Backend:                                                              │
+│  Terminal 1: cd ownly-backend/api && npm run dev                             │
+│  Should show: "Ownly API running on port 3001"                               │
+│                                                                               │
+│  Check Frontend:                                                             │
+│  Terminal 2: npm run dev                                                     │
+│  Should show: "Local: http://localhost:5173"                                 │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ STEP 1: COMPLETE KYC VERIFICATION ──────────────────────────────────────────┐
+│                                                                               │
+│  ☐ Open http://localhost:5173/kyc                                            │
+│  ☐ Fill form:                                                                │
+│    ☐ Email: test@example.com                                                 │
+│    ☐ Nombre: Juan                                                            │
+│    ☐ Apellido: Pérez                                                         │
+│  ☐ Click "Continuar"                                                         │
+│  ☐ See loading spinner                                                       │
+│  ☐ See "Paso 2: Verificar Identidad"                                         │
+│  ☐ See mock verification button                                              │
+│  ☐ Click "✓ Simular Verificación Exitosa"                                    │
+│  ☐ See "¡Verificación Completada!" screen                                    │
+│  ☐ See "Ver mis credenciales →" button                                       │
+│                                                                               │
+│  Expected Backend Logs:                                                      │
+│  ✓ "Credential created: cred_... for user user_..."                          │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ STEP 2: CHECK KYC RECORD IN DATABASE ───────────────────────────────────────┐
+│                                                                               │
+│  ☐ Go to https://app.supabase.com                                            │
+│  ☐ Select your project                                                       │
+│  ☐ Go to SQL Editor                                                          │
+│  ☐ Run query:                                                                │
+│    SELECT * FROM kyc_verifications ORDER BY created_at DESC LIMIT 1;         │
+│                                                                               │
+│  Expected Results:                                                           │
+│  ☐ Record exists                                                             │
+│  ☐ email = test@example.com                                                  │
+│  ☐ first_name = Juan                                                         │
+│  ☐ last_name = Pérez                                                         │
+│  ☐ status = completed                                                        │
+│  ☐ credential_id IS NOT NULL (credential created!)                           │
+│  ☐ credential_status = pending                                               │
+│                                                                               │
+│  Copy credential_id for next step                                            │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ STEP 3: CHECK CREDENTIAL RECORD IN DATABASE ────────────────────────────────┐
+│                                                                               │
+│  ☐ Copy credential_id from previous step                                     │
+│  ☐ Run query:                                                                │
+│    SELECT * FROM credentials WHERE id = 'YOUR_CREDENTIAL_ID';                │
+│                                                                               │
+│  Expected Results:                                                           │
+│  ☐ Credential record exists                                                  │
+│  ☐ type = identity_verified                                                  │
+│  ☐ status = pending (mock mode)                                              │
+│  ☐ credential_data contains:                                                 │
+│    ☐ type: identity_verified                                                 │
+│    ☐ issuer: ownly.eth                                                       │
+│    ☐ issuanceDate: 2026-04-22T...                                            │
+│    ☐ expirationDate: 2027-04-22T...                                          │
+│                                                                               │
+│  Privacy Check - credential_data does NOT contain:                           │
+│  ☐ NO full name                                                              │
+│  ☐ NO email                                                                  │
+│  ☐ NO date of birth                                                          │
+│  ☐ NO document numbers                                                       │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ STEP 4: CHECK BACKEND LOGS ─────────────────────────────────────────────────┐
+│                                                                               │
+│  ☐ Look at backend terminal (Terminal 1)                                     │
+│                                                                               │
+│  Expected Logs:                                                              │
+│  ☐ "Credential created: cred_... for user user_..."                          │
+│  ☐ "Document data saved, credential generation pending"                      │
+│                                                                               │
+│  If blockchain enabled:                                                      │
+│  ☐ "Publishing credential to blockchain..."                                  │
+│  ☐ "Transaction sent: 0x..."                                                 │
+│  ☐ "Transaction confirmed in block ..."                                      │
+│  ☐ "Credential published to blockchain: 0x..."                               │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ STEP 5: VIEW CREDENTIALS IN UI ─────────────────────────────────────────────┐
+│                                                                               │
+│  ☐ Click "Ver mis credenciales →" button                                     │
+│  ☐ Or navigate to http://localhost:5173/credentials                          │
+│                                                                               │
+│  Expected Results:                                                           │
+│  ☐ Credentials page loads                                                    │
+│  ☐ Your new credential appears in list                                       │
+│  ☐ Shows credential type                                                     │
+│  ☐ Shows creation date                                                       │
+│  ☐ Shows status (pending or published)                                       │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ STEP 6: TEST MULTIPLE CREDENTIALS (OPTIONAL) ───────────────────────────────┐
+│                                                                               │
+│  ☐ Complete KYC again with different email                                   │
+│  ☐ Use: test2@example.com                                                    │
+│  ☐ Repeat Steps 1-5                                                          │
+│                                                                               │
+│  Expected Results:                                                           │
+│  ☐ Second credential created                                                 │
+│  ☐ Different credential_id                                                   │
+│  ☐ Both appear in credentials list                                           │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ TROUBLESHOOTING ────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  Issue: Credential not created                                               │
+│  ☐ Check backend logs for errors                                             │
+│  ☐ Verify database connection                                                │
+│  ☐ Check KYC record created successfully                                     │
+│                                                                               │
+│  Issue: Credential status is "failed"                                        │
+│  ☐ Check backend logs for blockchain errors                                  │
+│  ☐ Verify wallet balance (if blockchain enabled)                             │
+│  ☐ Check contract address configuration                                      │
+│                                                                               │
+│  Issue: Credentials not visible in UI                                        │
+│  ☐ Check database has credential records                                     │
+│  ☐ Check browser console (F12) for errors                                    │
+│  ☐ Verify /api/kyc/user/:userId endpoint works                               │
+│                                                                               │
+│  Issue: Backend not running                                                  │
+│  ☐ cd ownly-backend/api                                                      │
+│  ☐ npm run dev                                                               │
+│  ☐ Should show: "Ownly API running on port 3001"                             │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ SUCCESS CRITERIA ───────────────────────────────────────────────────────────┐
+│                                                                               │
+│  ✅ KYC verification completes                                               │
+│  ✅ Credential created automatically                                         │
+│  ✅ Credential linked to KYC                                                 │
+│  ✅ Minimal data stored (no PII)                                             │
+│  ✅ Credential visible in UI                                                 │
+│  ✅ Database records correct                                                 │
+│  ✅ Backend logs show success                                                │
+│  ✅ No errors in console                                                     │
+│                                                                               │
+│  If all ✅, SPRINT 3 is working! 🎉                                          │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ NEXT STEPS ─────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  After Testing:                                                              │
+│  ☐ Document any issues found                                                 │
+│  ☐ Fix any bugs                                                              │
+│  ☐ Test with real Sumsub (when internet available)                           │
+│  ☐ Test blockchain publishing (if configured)                                │
+│  ☐ Move to SPRINT 4: Documents                                               │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                         🚀 READY TO TEST? START NOW!                          ║
+║                                                                                ║
+║                    Total Time: ~15 minutes                                     ║
+║                    Difficulty: Easy                                           ║
+║                    Prerequisites: Backend + Frontend running                   ║
+║                                                                                ║
+║                         Read: SPRINT3_TESTING_FLOW.md                         ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+Notes:
+  • Mock mode creates credentials but doesn't publish to blockchain
+  • Credentials have minimal data (no personal information)
+  • Each test creates new records (database grows)
+  • Can delete records manually if needed
+  • Backend logs are very helpful for debugging
+
+Date: April 22, 2026
+Status: Ready to Test

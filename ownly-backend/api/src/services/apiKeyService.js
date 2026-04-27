@@ -210,7 +210,85 @@ export async function getApiUsageStats(apiKeyId, days = 30) {
 }
 
 /**
- * Hash API key (use bcrypt in production)
+ * Regenerate API key — invalidates old key and creates a new one
+ * @param {string} apiKeyId - ID of the API key to regenerate
+ * @returns {Promise<{apiKey: string, record: object}>}
+ */
+export async function regenerateApiKey(apiKeyId) {
+  try {
+    // Get existing key info
+    const existing = await getApiKeyInfo(apiKeyId);
+    if (!existing) {
+      throw new Error('API key not found');
+    }
+
+    // Revoke old key
+    await revokeApiKey(apiKeyId);
+
+    // Generate new key with same settings
+    const newApiKey = `ownly_${crypto.randomBytes(32).toString('hex')}`;
+    const keyHash = hashApiKey(newApiKey);
+
+    const { data, error } = await supabase
+      .from('api_keys')
+      .insert({
+        client_id: existing.client_id,
+        client_name: existing.client_name,
+        key_hash: keyHash,
+        permissions: existing.permissions,
+        rate_limit: existing.rate_limit,
+        user_id: existing.user_id || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to regenerate API key: ${error.message}`);
+    }
+
+    // Log regeneration event
+    logApiUsage(apiKeyId, '/api-keys/regenerate', 'POST', 200, 0).catch(console.error);
+
+    return {
+      apiKey: newApiKey, // Only return plain key once
+      record: data,
+    };
+  } catch (err) {
+    console.error('Error regenerating API key:', err);
+    throw err;
+  }
+}
+
+/**
+ * Log API key validation failure
+ * @param {string} keyFragment - First 8 chars of attempted key (for identification without exposing full key)
+ * @param {string} reason - Reason for failure
+ * @param {string} endpoint - Endpoint that was attempted
+ * @param {string} ipAddress - IP address of requester
+ */
+export async function logApiKeyFailure(keyFragment, reason, endpoint, ipAddress) {
+  try {
+    supabase
+      .from('api_key_usage')
+      .insert({
+        api_key_id: null,
+        endpoint,
+        method: 'AUTH_FAILURE',
+        status_code: 401,
+        response_time_ms: 0,
+        // Store key fragment and reason in a safe way
+      })
+      .then()
+      .catch(err => console.error('Error logging API key failure:', err));
+
+    console.warn(`[SECURITY] API key validation failed: ${reason} | key: ${keyFragment}... | endpoint: ${endpoint} | ip: ${ipAddress}`);
+  } catch (err) {
+    console.error('Error in logApiKeyFailure:', err);
+  }
+}
+
+/**
+ * Hash API key using SHA-256
  */
 function hashApiKey(key) {
   return crypto.createHash('sha256').update(key).digest('hex');

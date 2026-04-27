@@ -2,19 +2,21 @@
  * Identity API — para integración B2B (prop firms, brokers, exchanges)
  * Permite a empresas verificar usuarios por su Ownly ID
  * 
- * SEGURIDAD: Todos los endpoints requieren autenticación (API Key)
+ * SEGURIDAD: Todos los endpoints requieren autenticación (API Key) y rol BUSINESS o ADMIN
  * RESPUESTA: Datos seguros sin exponer PII o detalles internos
  */
 
 import { Router } from 'express';
 import * as dbService from '../services/databaseService.js';
 import { verifyApiKey, requirePermission } from '../middleware/authMiddleware.js';
+import { requireBusiness } from '../middleware/rbacMiddleware.js';
 import * as apiKeyService from '../services/apiKeyService.js';
 
 export const identityRouter = Router();
 
-// Middleware: Require API key for all identity endpoints
+// Middleware: Require API key and BUSINESS or ADMIN role for all identity endpoints
 identityRouter.use(verifyApiKey);
+identityRouter.use(requireBusiness);
 
 /**
  * GET /api/identity/:ownlyId

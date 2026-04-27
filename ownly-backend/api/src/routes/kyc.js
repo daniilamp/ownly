@@ -1,6 +1,7 @@
 /**
  * KYC Routes
  * Endpoints for KYC verification flow
+ * RBAC: Requires USER or ADMIN role
  */
 
 import { Router } from 'express';
@@ -9,8 +10,14 @@ import * as sumsubService from '../services/sumsubService.js';
 import * as dbService from '../services/databaseService.js';
 import * as credentialService from '../services/credentialService.js';
 import * as blockchainService from '../services/blockchainService.js';
+import { verifyJWT } from '../middleware/authMiddleware.js';
+import { requireUser } from '../middleware/rbacMiddleware.js';
 
 export const kycRouter = Router();
+
+// Middleware: Require JWT authentication and USER or ADMIN role for all KYC endpoints
+kycRouter.use(verifyJWT);
+kycRouter.use(requireUser);
 
 // ── POST /api/kyc/init ────────────────────────────────────────────────────────
 /**

@@ -5,6 +5,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { enrichRequestWithRole } from './rbacMiddleware.js';
+import { logApiKeyFailure } from '../services/apiKeyService.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -38,11 +40,24 @@ export async function verifyApiKey(req, res, next) {
       .single();
 
     if (error || !apiKeyRecord) {
+      // Log failure with key fragment for security monitoring
+      logApiKeyFailure(
+        apiKey.substring(0, 8),
+        'Invalid or inactive API key',
+        req.path,
+        req.ip || 'unknown'
+      );
       return res.status(401).json({ error: 'Invalid or inactive API key', code: 'UNAUTHORIZED' });
     }
 
     // Check if API key has expired
     if (apiKeyRecord.expires_at && new Date(apiKeyRecord.expires_at) < new Date()) {
+      logApiKeyFailure(
+        apiKey.substring(0, 8),
+        'API key expired',
+        req.path,
+        req.ip || 'unknown'
+      );
       return res.status(401).json({ error: 'API key expired', code: 'EXPIRED_API_KEY' });
     }
 
@@ -53,6 +68,7 @@ export async function verifyApiKey(req, res, next) {
       clientName: apiKeyRecord.client_name,
       permissions: apiKeyRecord.permissions || [],
       rateLimit: apiKeyRecord.rate_limit || 1000,
+      userId: apiKeyRecord.user_id, // Link to user for RBAC
     };
 
     // Update last used timestamp
@@ -60,6 +76,9 @@ export async function verifyApiKey(req, res, next) {
       .from('api_keys')
       .update({ last_used_at: new Date().toISOString() })
       .eq('id', apiKeyRecord.id);
+
+    // Enrich request with user role
+    await enrichRequestWithRole(req);
 
     next();
   } catch (err) {
@@ -92,6 +111,9 @@ export async function verifyJWT(req, res, next) {
       email: data.user.email,
       type: 'user',
     };
+
+    // Enrich request with user role
+    await enrichRequestWithRole(req);
 
     next();
   } catch (err) {
