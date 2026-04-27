@@ -9,6 +9,7 @@ import { batchRouter } from "./routes/batch.js";
 import { kycRouter } from "./routes/kyc.js";
 import { documentRouter } from "./routes/documents.js";
 import { authRouter } from "./routes/auth.js";
+import { accessRouter } from "./routes/access.js";
 import { identityRouter } from "./routes/identity.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -61,6 +62,7 @@ app.use("/api/kyc", kycRouter);
 app.use("/api/documents", documentRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/identity", identityRouter);
+app.use("/api/access", accessRouter);
 
 // Health check
 app.get("/health", (_, res) => res.json({ status: "ok", version: "1.0.0" }));

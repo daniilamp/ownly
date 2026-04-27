@@ -4,44 +4,24 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { CheckCircle, XCircle, FileText, Clock, Eye, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function Access() {
   const { accessId } = useParams();
-  const [searchParams] = useSearchParams();
   const [result, setResult] = useState(null);
   const [showDoc, setShowDoc] = useState(false);
   const [docUrl, setDocUrl] = useState(null);
 
   useEffect(() => {
-    const token = searchParams.get('t');
-    if (!token) {
-      setResult({ valid: false, reason: 'Enlace inválido o incompleto' });
-      return;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token));
-
-      // Validar expiración
-      if (new Date(payload.expiresAt) < new Date()) {
-        setResult({ valid: false, reason: 'Este acceso ha expirado' });
-        return;
-      }
-
-      if (payload.status === 'revoked') {
-        setResult({ valid: false, reason: 'Acceso revocado por el propietario' });
-        return;
-      }
-
-      setResult({ valid: true, access: payload });
-    } catch {
-      setResult({ valid: false, reason: 'Enlace inválido' });
-    }
-  }, [accessId, searchParams]);
+    const API_URL = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
+    fetch(`${API_URL}/api/access/${accessId}`)
+      .then(r => r.json())
+      .then(data => setResult(data))
+      .catch(() => setResult({ valid: false, reason: 'Error de conexión' }));
+  }, [accessId]);
 
   const handleViewDoc = () => {
     const content = result?.access?.content;

@@ -41,52 +41,33 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
     setShareLoading(true);
     setShareError(null);
     try {
-      // Desencriptar el documento con la contraseña del propietario
       const encryptedData = base64ToArrayBuffer(shareDoc.encryptedData);
       const iv = base64ToArrayBuffer(shareDoc.iv);
       const salt = base64ToArrayBuffer(shareDoc.salt);
       const decrypted = await decryptDocument(encryptedData, sharePassword, iv, salt);
 
-      // Convertir a base64 para almacenar
       const bytes = new Uint8Array(decrypted);
       let binary = '';
       for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
       const base64Content = btoa(binary);
 
-      const access = createAccess(shareDoc, shareExpiry, base64Content);
-      // Generar URL self-contained con todo el payload embebido
-      const payload = btoa(JSON.stringify({
-        id: access.access.id,
-        docTitle: access.access.docTitle,
-        docType: access.access.docType,
-        mimeType: shareDoc.mimeType,
-        fileName: shareDoc.fileName,
-        expiresAt: access.access.expiresAt,
-        status: 'active',
-        content: base64Content,
-      }));
-      setActiveShare({ ...access.access, payload });
+      const access = await createAccess(shareDoc, shareExpiry, base64Content);
+      setActiveShare(access);
       setSharePassword('');
-    } catch {
-      setShareError('Contraseña incorrecta');
+    } catch (e) {
+      setShareError(e.message === 'Error al crear acceso' ? 'Error al crear acceso. Inténtalo de nuevo.' : 'Contraseña incorrecta');
     } finally {
       setShareLoading(false);
     }
   };
 
-  // URL corta para QR (solo funciona en mismo navegador — localStorage)
-  const shortLink = activeShare ? `${BASE_URL}/access/${activeShare.id}` : '';
-  // URL larga con payload para compartir entre dispositivos
-  const shareLink = activeShare
-    ? `${BASE_URL}/access/${activeShare.id}?t=${activeShare.payload}`
-    : '';
-  // QR usa URL corta (cabe en el QR)
+  // Link corto — funciona en cualquier dispositivo
+  const shareLink = activeShare ? `${BASE_URL}/access/${activeShare.id}` : '';
   const shareQrUrl = activeShare
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shortLink)}`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shareLink)}`
     : null;
 
   const handleCopyLink = () => {
-    // Copiar el link largo (con payload) para compartir entre dispositivos
     navigator.clipboard.writeText(shareLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -271,17 +252,14 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
             ) : (
               <>
                 {/* QR generado */}
-                <div className="rounded-xl p-3 text-center mb-2" style={{ background: 'white' }}>
+                <div className="rounded-xl p-3 text-center mb-3" style={{ background: 'white' }}>
                   <img src={shareQrUrl} alt="QR acceso" style={{ width: 200, height: 200, margin: '0 auto' }} />
                 </div>
-                <p className="text-xs text-center mb-3" style={{ color: 'rgba(240,234,255,0.3)' }}>
-                  QR válido en este dispositivo · Usa el link para otros dispositivos
-                </p>
 
-                {/* Link para copiar */}
+                {/* Link corto */}
                 <div className="rounded-xl p-3 mb-3 flex items-center gap-2"
                   style={{ background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.15)' }}>
-                  <code className="text-xs flex-1 truncate" style={{ color: '#B794F6' }}>{shortLink}</code>
+                  <code className="text-xs flex-1 truncate" style={{ color: '#B794F6' }}>{shareLink}</code>
                   <button onClick={handleCopyLink}
                     className="shrink-0 p-1.5 rounded-lg"
                     style={{ background: 'rgba(183,148,246,0.15)', color: '#B794F6' }}>
