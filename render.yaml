@@ -22,3 +22,15 @@ services:
         value: 0x7368efd0B81F675B3B392e8534d8A74FA0b0D2A2
       - key: ISSUER_PRIVATE_KEY
         value: 0xbba7ea7736f54a85328ba00ec42598d00d781bf2918f1adf38414e41d09c3360
+      - key: SUPABASE_URL
+        value: https://jmbqtvmmldxgstabgpwh.supabase.co
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUMSUB_APP_TOKEN
+        sync: false
+      - key: SUMSUB_SECRET_KEY
+        sync: false
+      - key: SUMSUB_BASE_URL
+        value: https://api.sumsub.com
+      - key: SUMSUB_LEVEL_NAME
+        value: idv-and-phone-verification
