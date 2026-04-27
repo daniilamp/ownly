@@ -53,11 +53,29 @@ authRouter.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: error.message });
     }
 
+    // Get user role from users table
+    let userRole = 'user'; // default role
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('email', email)
+        .single();
+      
+      if (!userError && userData) {
+        userRole = userData.role;
+      }
+    } catch (roleError) {
+      console.error('Error fetching user role:', roleError);
+      // Continue with default role if query fails
+    }
+
     return res.json({
       success: true,
       userId: data.user.id,
       email: data.user.email,
       token: data.session.access_token,
+      role: userRole,
     });
   } catch (err) {
     next(err);
