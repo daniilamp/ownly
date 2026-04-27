@@ -15,9 +15,13 @@ import { requireUser } from '../middleware/rbacMiddleware.js';
 
 export const kycRouter = Router();
 
-// Middleware: Require JWT authentication and USER or ADMIN role for all KYC endpoints
-kycRouter.use(verifyJWT);
-kycRouter.use(requireUser);
+// Public routes (no authentication required)
+const publicRouter = Router();
+
+// Protected routes (require JWT authentication and USER or ADMIN role)
+const protectedRouter = Router();
+protectedRouter.use(verifyJWT);
+protectedRouter.use(requireUser);
 
 // ── POST /api/kyc/init ────────────────────────────────────────────────────────
 /**
@@ -34,7 +38,7 @@ const InitSchema = z.object({
   lastName: z.string().min(1),
 });
 
-kycRouter.post('/init', async (req, res, next) => {
+publicRouter.post('/init', async (req, res, next) => {
   try {
     const parsed = InitSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -76,51 +80,70 @@ kycRouter.post('/init', async (req, res, next) => {
       });
     }
 
-    // Always use mock mode (Sumsub requires real credentials)
-    console.log('Creating mock KYC applicant for:', userId);
+    // Try real Sumsub first, fallback to mock if it fails
+    let applicantId, sdkToken, isMock = false;
 
-    const mockApplicantId = `mock_${userId}_${Date.now()}`;
-    const mockSdkToken = `mock_token_${userId}_${Date.now()}`;
+    try {
+      // Attempt real Sumsub integration
+      const sumsubResult = await sumsubService.createApplicant({
+        externalUserId: userId,
+        email,
+        firstName,
+        lastName,
+      });
+
+      applicantId = sumsubResult.id;
+      sdkToken = await sumsubService.generateSDKToken(applicantId, userId);
+      console.log('Real Sumsub applicant created:', applicantId);
+    } catch (sumsubErr) {
+      // Fallback to mock mode if Sumsub fails
+      console.warn('Sumsub failed, using mock mode:', sumsubErr.message);
+      applicantId = `mock_${userId}_${Date.now()}`;
+      sdkToken = `mock_token_${userId}_${Date.now()}`;
+      isMock = true;
+    }
 
     // Save to database
     const kycRecord = await dbService.createKYCVerification({
-      applicantId: mockApplicantId,
+      applicantId: applicantId,
       externalUserId: userId,
       email,
       firstName,
       lastName,
     });
 
-    // Create credential automatically
-    try {
-      const credential = await credentialService.createCredential(
-        userId,
-        kycRecord.id,
-        { status: 'approved' }
-      );
-
-      console.log(`Credential created automatically in mock mode: ${credential.id}`);
-      await dbService.linkCredentialToKYC(kycRecord.id, credential.id);
-
-      // Publish to blockchain
+    // Create credential automatically only in mock mode
+    if (isMock) {
       try {
-        await blockchainService.initializeBlockchain();
-        const blockchainResult = await blockchainService.publishCredential(credential);
-        console.log(`[blockchain] Credential published: ${blockchainResult.txHash}`);
-        await credentialService.updateCredentialStatus(credential.id, 'published', blockchainResult.txHash);
-      } catch (blockchainErr) {
-        console.warn('[blockchain] Publishing failed (credential still created):', blockchainErr.message);
+        const credential = await credentialService.createCredential(
+          userId,
+          kycRecord.id,
+          { status: 'approved' }
+        );
+
+        console.log(`Credential created automatically in mock mode: ${credential.id}`);
+        await dbService.linkCredentialToKYC(kycRecord.id, credential.id);
+
+        // Publish to blockchain
+        try {
+          await blockchainService.initializeBlockchain();
+          const blockchainResult = await blockchainService.publishCredential(credential);
+          console.log(`[blockchain] Credential published: ${blockchainResult.txHash}`);
+          await credentialService.updateCredentialStatus(credential.id, 'published', blockchainResult.txHash);
+        } catch (blockchainErr) {
+          console.warn('[blockchain] Publishing failed (credential still created):', blockchainErr.message);
+        }
+      } catch (credentialErr) {
+        console.error('Error creating credential in mock mode:', credentialErr);
       }
-    } catch (credentialErr) {
-      console.error('Error creating credential in mock mode:', credentialErr);
     }
 
     return res.json({
       success: true,
-      applicantId: mockApplicantId,
-      sdkToken: mockSdkToken,
+      applicantId: applicantId,
+      sdkToken: sdkToken,
       externalUserId: userId,
-      mock: true,
+      mock: isMock,
     });
 
   } catch (err) {
@@ -137,7 +160,7 @@ kycRouter.post('/init', async (req, res, next) => {
  * Params: applicantId
  * Returns: { status, reviewResult, documentData }
  */
-kycRouter.get('/status/:applicantId', async (req, res, next) => {
+protectedRouter.get('/status/:applicantId', async (req, res, next) => {
   try {
     const { applicantId } = req.params;
 
@@ -193,7 +216,7 @@ kycRouter.get('/status/:applicantId', async (req, res, next) => {
  * 
  * IMPORTANT: Verify signature for security
  */
-kycRouter.post('/webhook', async (req, res, next) => {
+publicRouter.post('/webhook', async (req, res, next) => {
   try {
     // Verify webhook signature
     const signature = req.headers['x-payload-digest'];
@@ -295,7 +318,7 @@ kycRouter.post('/webhook', async (req, res, next) => {
  * Params: userId (your internal user ID)
  * Returns: { verification, credentials }
  */
-kycRouter.get('/user/:userId', async (req, res, next) => {
+publicRouter.get('/user/:userId', async (req, res, next) => {
   try {
     const { userId } = req.params;
 
@@ -325,7 +348,7 @@ kycRouter.get('/user/:userId', async (req, res, next) => {
  * Body: { applicantId, userId }
  * Returns: { success, credential }
  */
-kycRouter.post('/simulate-approval', async (req, res, next) => {
+publicRouter.post('/simulate-approval', async (req, res, next) => {
   try {
     const { applicantId, userId } = req.body;
 
@@ -409,7 +432,7 @@ kycRouter.post('/simulate-approval', async (req, res, next) => {
  * Get verification statistics (admin only)
  * Returns: { total, approved, rejected, pending }
  */
-kycRouter.get('/stats', async (req, res, next) => {
+protectedRouter.get('/stats', async (req, res, next) => {
   try {
     const stats = await dbService.getVerificationStats();
     return res.json({ success: true, stats });
@@ -425,7 +448,7 @@ kycRouter.get('/stats', async (req, res, next) => {
  * Query: ?limit=50
  * Returns: Array of recent verifications
  */
-kycRouter.get('/recent', async (req, res, next) => {
+protectedRouter.get('/recent', async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
     const verifications = await dbService.getRecentVerifications(limit);
@@ -435,3 +458,7 @@ kycRouter.get('/recent', async (req, res, next) => {
     next(err);
   }
 });
+
+// Mount routers
+kycRouter.use(publicRouter);
+kycRouter.use(protectedRouter);

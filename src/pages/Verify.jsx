@@ -262,8 +262,8 @@ export default function Verify() {
                   <QrCode className="w-6 h-6" style={{ color: '#B794F6' }} />
                 </div>
                 <div>
-                  <p className="font-bold text-lg" style={{ color: '#F0EAFF' }}>Usar en acceso</p>
-                  <p className="text-xs" style={{ color: 'rgba(240,234,255,0.4)' }}>Discotecas, eventos, locales</p>
+                  <p className="font-bold text-lg" style={{ color: '#F0EAFF' }}>Verificación rápida</p>
+                  <p className="text-xs" style={{ color: 'rgba(240,234,255,0.4)' }}>Escaneo de QR en tiempo real</p>
                 </div>
               </div>
               <p className="text-sm" style={{ color: 'rgba(240,234,255,0.5)' }}>
@@ -287,8 +287,8 @@ export default function Verify() {
                   <Building2 className="w-6 h-6" style={{ color: '#60A5FA' }} />
                 </div>
                 <div>
-                  <p className="font-bold text-lg" style={{ color: '#F0EAFF' }}>Para empresas</p>
-                  <p className="text-xs" style={{ color: 'rgba(240,234,255,0.4)' }}>Prop firms, brokers, exchanges</p>
+                  <p className="font-bold text-lg" style={{ color: '#F0EAFF' }}>Integración empresarial</p>
+                  <p className="text-xs" style={{ color: 'rgba(240,234,255,0.4)' }}>Verificación vía API</p>
                 </div>
               </div>
               <p className="text-sm" style={{ color: 'rgba(240,234,255,0.5)' }}>
