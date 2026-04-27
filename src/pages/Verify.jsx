@@ -7,6 +7,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import QRScanner from '@/components/verify/QRScanner';
+import { VerificationResult } from '@/components/VerificationResult';
 import { useZKVerify } from '@/hooks/useZKVerify';
 
 const API_URL = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
@@ -183,46 +184,14 @@ function IDMode() {
         </div>
       ) : (
         <div className="mb-6">
-          <div className="rounded-2xl p-8 text-center mb-4"
-            style={{
-              background: result.verified ? 'linear-gradient(135deg, rgba(52,211,153,0.1), rgba(7,5,16,0.95))' : 'linear-gradient(135deg, rgba(248,113,113,0.1), rgba(7,5,16,0.95))',
-              border: `2px solid ${result.verified ? 'rgba(52,211,153,0.4)' : 'rgba(248,113,113,0.4)'}`,
-            }}>
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
-              style={{ background: result.verified ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)', border: `3px solid ${result.verified ? 'rgba(52,211,153,0.5)' : 'rgba(248,113,113,0.5)'}` }}>
-              {result.verified ? <CheckCircle className="w-10 h-10" style={{ color: '#34D399' }} /> : <XCircle className="w-10 h-10" style={{ color: '#F87171' }} />}
-            </div>
-            <h2 className="text-2xl font-bold mb-3" style={{ color: result.verified ? '#34D399' : '#F87171' }}>
-              {result.verified ? 'USUARIO VERIFICADO' : 'NO VERIFICADO'}
-            </h2>
-            {result.verified && (
-              <div className="space-y-1 mb-2">
-                {['✓ KYC completo', '✓ Identidad verificada', '✓ Usuario único', '✓ Riesgo bajo'].map(t => (
-                  <p key={t} className="text-sm font-semibold" style={{ color: '#F0EAFF' }}>{t}</p>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-xl overflow-hidden mb-4" style={{ border: '1px solid rgba(183,148,246,0.15)' }}>
-            <button onClick={() => setShowDetails(!showDetails)}
-              className="w-full flex items-center justify-between px-5 py-3"
-              style={{ background: 'rgba(183,148,246,0.04)' }}>
-              <span className="text-sm font-semibold" style={{ color: '#F0EAFF' }}>Ver objeto de verificación</span>
-              {showDetails ? <ChevronUp className="w-4 h-4" style={{ color: 'rgba(183,148,246,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(183,148,246,0.5)' }} />}
-            </button>
-            {showDetails && (
-              <div className="px-5 py-4" style={{ background: 'rgba(7,5,16,0.8)' }}>
-                <pre className="text-xs overflow-auto rounded-lg p-3"
-                  style={{ background: 'rgba(183,148,246,0.04)', color: '#B794F6', border: '1px solid rgba(183,148,246,0.1)' }}>
-                  {JSON.stringify(detailsJson, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
+          <VerificationResult 
+            result={result}
+            showDetails={showDetails}
+            onToggleDetails={setShowDetails}
+          />
 
           <button onClick={() => { setResult(null); setOwnlyId(''); }}
-            className="w-full py-3 rounded-xl text-sm font-semibold"
+            className="w-full py-3 rounded-xl text-sm font-semibold mt-4"
             style={{ background: 'rgba(183,148,246,0.08)', color: '#B794F6', border: '1px solid rgba(183,148,246,0.2)' }}>
             Verificar otro usuario
           </button>

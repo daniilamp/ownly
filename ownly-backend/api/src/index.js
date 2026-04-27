@@ -11,6 +11,7 @@ import { documentRouter } from "./routes/documents.js";
 import { authRouter } from "./routes/auth.js";
 import { accessRouter } from "./routes/access.js";
 import { identityRouter } from "./routes/identity.js";
+import { apiKeysRouter } from "./routes/apiKeys.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -63,6 +64,7 @@ app.use("/api/documents", documentRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/identity", identityRouter);
 app.use("/api/access", accessRouter);
+app.use("/api/api-keys", apiKeysRouter);
 
 // Health check
 app.get("/health", (_, res) => res.json({ status: "ok", version: "1.0.0" }));
