@@ -1,5 +1,6 @@
 /**
  * Auth Routes — email/password via Supabase Auth
+ * Updated: 2026-04-27 - Returns user role from database
  */
 
 import { Router } from 'express';
