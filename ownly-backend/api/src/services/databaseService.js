@@ -17,16 +17,26 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
  * @returns {Promise<Object>} Created record
  */
 export async function createKYCVerification(data) {
+  // Detect if externalUserId is in Ownly ID format
+  const isOwnlyId = /^ow_[A-Z0-9]+$/.test(data.externalUserId);
+
+  const insertData = {
+    applicant_id: data.applicantId,
+    external_user_id: data.externalUserId,
+    email: data.email,
+    first_name: data.firstName,
+    last_name: data.lastName,
+    status: 'pending',
+  };
+
+  // If Ownly ID format, populate ownly_id field
+  if (isOwnlyId) {
+    insertData.ownly_id = data.externalUserId;
+  }
+
   const { data: record, error } = await supabase
     .from('kyc_verifications')
-    .insert({
-      applicant_id: data.applicantId,
-      external_user_id: data.externalUserId,
-      email: data.email,
-      first_name: data.firstName,
-      last_name: data.lastName,
-      status: 'pending',
-    })
+    .insert(insertData)
     .select()
     .single();
 
@@ -63,6 +73,17 @@ export async function updateKYCVerification(applicantId, reviewData) {
     updateData.status = 'rejected';
   }
 
+  // If external_user_id is being updated, maintain ownly_id consistency
+  if (reviewData.externalUserId) {
+    updateData.external_user_id = reviewData.externalUserId;
+    
+    // If the new external_user_id matches Ownly ID format, update ownly_id as well
+    const isOwnlyId = /^ow_[A-Z0-9]+$/.test(reviewData.externalUserId);
+    if (isOwnlyId) {
+      updateData.ownly_id = reviewData.externalUserId;
+    }
+  }
+
   const { data: record, error } = await supabase
     .from('kyc_verifications')
     .update(updateData)
@@ -85,16 +106,29 @@ export async function updateKYCVerification(applicantId, reviewData) {
  * @returns {Promise<Object>} Updated record
  */
 export async function updateKYCDocumentData(applicantId, documentData) {
+  const updateData = {
+    document_type: documentData.type,
+    document_number: documentData.number,
+    date_of_birth: documentData.dob,
+    expiry_date: documentData.expiryDate,
+    country: documentData.country,
+    updated_at: new Date().toISOString(),
+  };
+
+  // If external_user_id is being updated, maintain ownly_id consistency
+  if (documentData.externalUserId) {
+    updateData.external_user_id = documentData.externalUserId;
+    
+    // If the new external_user_id matches Ownly ID format, update ownly_id as well
+    const isOwnlyId = /^ow_[A-Z0-9]+$/.test(documentData.externalUserId);
+    if (isOwnlyId) {
+      updateData.ownly_id = documentData.externalUserId;
+    }
+  }
+
   const { data: record, error } = await supabase
     .from('kyc_verifications')
-    .update({
-      document_type: documentData.type,
-      document_number: documentData.number,
-      date_of_birth: documentData.dob,
-      expiry_date: documentData.expiryDate,
-      country: documentData.country,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('applicant_id', applicantId)
     .select()
     .single();
@@ -129,17 +163,43 @@ export async function getKYCVerification(applicantId) {
 
 /**
  * Get KYC verification by external user ID
- * @param {string} externalUserId - Your internal user ID
+ * @param {string} externalUserId - Your internal user ID or Ownly ID
  * @returns {Promise<Object|null>} Verification record or null
  */
 export async function getKYCByUserId(externalUserId) {
-  const { data, error } = await supabase
-    .from('kyc_verifications')
-    .select('*')
-    .eq('external_user_id', externalUserId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
+  // Detect Ownly ID format (ow_XXXXX)
+  const isOwnlyId = /^ow_[A-Z0-9]+$/.test(externalUserId);
+
+  let data = null;
+  let error = null;
+
+  // If Ownly ID format, try querying ownly_id field first
+  if (isOwnlyId) {
+    const result = await supabase
+      .from('kyc_verifications')
+      .select('*')
+      .eq('ownly_id', externalUserId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    data = result.data;
+    error = result.error;
+  }
+
+  // If not found or not Ownly ID format, fallback to external_user_id query
+  if (!data && (!error || error.code === 'PGRST116')) {
+    const result = await supabase
+      .from('kyc_verifications')
+      .select('*')
+      .eq('external_user_id', externalUserId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    data = result.data;
+    error = result.error;
+  }
 
   if (error && error.code !== 'PGRST116') {
     console.error('Database error getting KYC by user ID:', error);
