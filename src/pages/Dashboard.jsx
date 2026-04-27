@@ -25,7 +25,7 @@ function generateOwnlyId(userId) {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
   const { credentials, loading: credLoading } = useCredentials();
   const { documents } = useDocuments();
@@ -34,6 +34,9 @@ export default function Dashboard() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedQR, setCopiedQR] = useState(false);
+
+  // Role-based access
+  const canAccessVerifier = userRole === 'business' || userRole === 'admin';
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
@@ -109,19 +112,21 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid ${canAccessVerifier ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
               <button onClick={() => setShowQRModal(true)}
                 className="py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
                 style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510' }}>
                 <QrCode className="w-4 h-4" />
                 Mostrar QR
               </button>
-              <button onClick={() => navigate('/verify')}
-                className="py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
-                style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
-                <TrendingUp className="w-4 h-4" />
-                Verificador
-              </button>
+              {canAccessVerifier && (
+                <button onClick={() => navigate('/verify')}
+                  className="py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                  style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
+                  <TrendingUp className="w-4 h-4" />
+                  Verificador
+                </button>
+              )}
             </div>
           </div>
         ) : (
