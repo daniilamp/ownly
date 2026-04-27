@@ -57,17 +57,23 @@ authRouter.post('/login', async (req, res, next) => {
     // Get user role from users table
     let userRole = 'user'; // default role
     try {
+      console.log('[AUTH] Fetching role for email:', email);
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role')
         .eq('email', email)
         .single();
       
+      console.log('[AUTH] Query result - data:', userData, 'error:', userError);
+      
       if (!userError && userData) {
         userRole = userData.role;
+        console.log('[AUTH] Role set to:', userRole);
+      } else {
+        console.log('[AUTH] Using default role due to error or no data');
       }
     } catch (roleError) {
-      console.error('Error fetching user role:', roleError);
+      console.error('[AUTH] Error fetching user role:', roleError);
       // Continue with default role if query fails
     }
 
