@@ -54,7 +54,18 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
       const base64Content = btoa(binary);
 
       const access = createAccess(shareDoc, shareExpiry, base64Content);
-      setActiveShare(access);
+      // Generar URL self-contained con todo el payload embebido
+      const payload = btoa(JSON.stringify({
+        id: access.access.id,
+        docTitle: access.access.docTitle,
+        docType: access.access.docType,
+        mimeType: shareDoc.mimeType,
+        fileName: shareDoc.fileName,
+        expiresAt: access.access.expiresAt,
+        status: 'active',
+        content: base64Content,
+      }));
+      setActiveShare({ ...access.access, payload });
       setSharePassword('');
     } catch {
       setShareError('Contraseña incorrecta');
@@ -63,7 +74,9 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
     }
   };
 
-  const shareLink = activeShare ? `${BASE_URL}/access/${activeShare.id}` : '';
+  const shareLink = activeShare
+    ? `${BASE_URL}/access/${activeShare.id}?t=${activeShare.payload}`
+    : '';
   const shareQrUrl = activeShare
     ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shareLink)}`
     : null;

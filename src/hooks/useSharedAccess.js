@@ -27,14 +27,16 @@ function deleteContent(accessId) {
 export function useSharedAccess() {
   const [accesses, setAccesses] = useState(loadAccesses);
 
-  // Crear acceso compartido — incluye el contenido desencriptado
+  // Crear acceso compartido — codifica todo en el token de la URL
   const createAccess = useCallback((doc, durationLabel, decryptedContent) => {
     const durationMs = durationLabel === '10min' ? 10 * 60000
       : durationLabel === '1h' ? 3600000
       : 86400000;
 
+    const accessId = crypto.randomUUID();
+
     const access = {
-      id: crypto.randomUUID(),
+      id: accessId,
       docId: doc.id,
       docTitle: doc.title || doc.documentType,
       docType: doc.documentType,
@@ -46,15 +48,22 @@ export function useSharedAccess() {
       status: 'active',
     };
 
-    // Guardar contenido desencriptado asociado al access_id
+    // Guardar contenido en localStorage del propietario (para acceso desde mismo dispositivo)
     if (decryptedContent) {
-      saveContent(access.id, { data: decryptedContent, mimeType: doc.mimeType, fileName: doc.fileName });
+      saveContent(accessId, { data: decryptedContent, mimeType: doc.mimeType, fileName: doc.fileName });
     }
 
+    // También guardar el acceso con el contenido embebido para generar URL self-contained
+    const accessWithContent = decryptedContent
+      ? { ...access, content: decryptedContent }
+      : access;
+
+    // Guardar en localStorage del propietario
     const updated = [access, ...loadAccesses()];
     saveAccesses(updated);
     setAccesses(updated);
-    return access;
+
+    return { access, accessWithContent };
   }, []);
 
   // Revocar — también elimina el contenido
