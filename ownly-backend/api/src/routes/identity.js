@@ -14,9 +14,56 @@ import * as apiKeyService from '../services/apiKeyService.js';
 
 export const identityRouter = Router();
 
-// Middleware: Require API key and BUSINESS or ADMIN role for all identity endpoints
-identityRouter.use(verifyApiKey);
-identityRouter.use(requireBusiness);
+// Public router for web verifier (no API key required)
+const publicRouter = Router();
+
+// Protected router for B2B API (requires API key + BUSINESS role)
+const protectedRouter = Router();
+protectedRouter.use(verifyApiKey);
+protectedRouter.use(requireBusiness);
+
+
+/**
+ * PUBLIC GET /api/identity/public/:ownlyId
+ * Endpoint público para el verificador web (no requiere API Key)
+ * Consulta el estado de verificación de un usuario por su Ownly ID
+ */
+publicRouter.get('/public/:ownlyId', async (req, res, next) => {
+  try {
+    const { ownlyId } = req.params;
+    if (!ownlyId) return res.status(400).json({ error: 'ownlyId requerido' });
+
+    // Buscar por Ownly ID
+    let verification = await dbService.getKYCByUserId(ownlyId);
+
+    // Fallback: buscar por email
+    if (!verification && ownlyId.includes('@')) {
+      verification = await dbService.getKYCByEmail(ownlyId);
+    }
+
+    if (!verification) {
+      return res.json({
+        verified: false,
+        verification_level: 'none',
+        risk_score: 'unknown',
+        timestamp: new Date().toISOString(),
+        unique_user: false,
+      });
+    }
+
+    const isVerified = verification.review_answer === 'GREEN' || verification.status === 'completed' || !!verification.credential_id;
+
+    return res.json({
+      verified: isVerified,
+      verification_level: isVerified ? 'full' : (verification.status === 'pending' ? 'pending' : 'rejected'),
+      risk_score: 'low',
+      timestamp: verification.created_at,
+      unique_user: true,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * GET /api/identity/:ownlyId
@@ -34,7 +81,7 @@ identityRouter.use(requireBusiness);
  *   unique_user: boolean
  * }
  */
-identityRouter.get('/:ownlyId', requirePermission('verify:read'), async (req, res, next) => {
+protectedRouter.get('/:ownlyId', requirePermission('verify:read'), async (req, res, next) => {
   try {
     const { ownlyId } = req.params;
     if (!ownlyId) return res.status(400).json({ error: 'ownlyId requerido' });
@@ -85,7 +132,7 @@ identityRouter.get('/:ownlyId', requirePermission('verify:read'), async (req, re
  * 
  * Body: { ownly_id: string }
  */
-identityRouter.post('/verify', requirePermission('verify:read'), async (req, res, next) => {
+protectedRouter.post('/verify', requirePermission('verify:read'), async (req, res, next) => {
   try {
     const { ownly_id } = req.body;
 
@@ -138,7 +185,7 @@ identityRouter.post('/verify', requirePermission('verify:read'), async (req, res
  * 
  * REQUIERE: API Key con permiso 'verify:read'
  */
-identityRouter.get('/:ownlyId/unique', requirePermission('verify:read'), async (req, res, next) => {
+protectedRouter.get('/:ownlyId/unique', requirePermission('verify:read'), async (req, res, next) => {
   try {
     const { ownlyId } = req.params;
     
@@ -169,7 +216,7 @@ identityRouter.get('/:ownlyId/unique', requirePermission('verify:read'), async (
  * 
  * REQUIERE: API Key con permiso 'verify:read'
  */
-identityRouter.get('/email/:email', requirePermission('verify:read'), async (req, res, next) => {
+protectedRouter.get('/email/:email', requirePermission('verify:read'), async (req, res, next) => {
   try {
     const { email } = req.params;
     if (!email) return res.status(400).json({ error: 'Email requerido' });
@@ -203,3 +250,7 @@ identityRouter.get('/email/:email', requirePermission('verify:read'), async (req
     next(err);
   }
 });
+
+// Mount routers
+identityRouter.use(publicRouter);
+identityRouter.use(protectedRouter);

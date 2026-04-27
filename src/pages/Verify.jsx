@@ -136,7 +136,7 @@ function IDMode() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch(`${API_URL}/api/identity/${encodeURIComponent(ownlyId.trim())}`);
+      const res = await fetch(`${API_URL}/api/identity/public/${encodeURIComponent(ownlyId.trim())}`);
       setResult(await res.json());
     } catch {
       setResult({ verified: ownlyId.trim().length > 5, ownly_id: ownlyId.trim(), kyc_provider: 'Sumsub', verification_level: 'full', timestamp: new Date().toISOString(), unique_user: true, risk_score: 'low' });
