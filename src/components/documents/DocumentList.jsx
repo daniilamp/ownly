@@ -74,14 +74,19 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
     }
   };
 
+  // URL corta para QR (solo funciona en mismo navegador — localStorage)
+  const shortLink = activeShare ? `${BASE_URL}/access/${activeShare.id}` : '';
+  // URL larga con payload para compartir entre dispositivos
   const shareLink = activeShare
     ? `${BASE_URL}/access/${activeShare.id}?t=${activeShare.payload}`
     : '';
+  // QR usa URL corta (cabe en el QR)
   const shareQrUrl = activeShare
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shareLink)}`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shortLink)}`
     : null;
 
   const handleCopyLink = () => {
+    // Copiar el link largo (con payload) para compartir entre dispositivos
     navigator.clipboard.writeText(shareLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -266,14 +271,17 @@ export default function DocumentList({ documents, onView, onDelete, loading }) {
             ) : (
               <>
                 {/* QR generado */}
-                <div className="rounded-xl p-3 text-center mb-4" style={{ background: 'white' }}>
+                <div className="rounded-xl p-3 text-center mb-2" style={{ background: 'white' }}>
                   <img src={shareQrUrl} alt="QR acceso" style={{ width: 200, height: 200, margin: '0 auto' }} />
                 </div>
+                <p className="text-xs text-center mb-3" style={{ color: 'rgba(240,234,255,0.3)' }}>
+                  QR válido en este dispositivo · Usa el link para otros dispositivos
+                </p>
 
-                {/* Link */}
+                {/* Link para copiar */}
                 <div className="rounded-xl p-3 mb-3 flex items-center gap-2"
                   style={{ background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.15)' }}>
-                  <code className="text-xs flex-1 truncate" style={{ color: '#B794F6' }}>{shareLink}</code>
+                  <code className="text-xs flex-1 truncate" style={{ color: '#B794F6' }}>{shortLink}</code>
                   <button onClick={handleCopyLink}
                     className="shrink-0 p-1.5 rounded-lg"
                     style={{ background: 'rgba(183,148,246,0.15)', color: '#B794F6' }}>
