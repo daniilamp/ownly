@@ -13,6 +13,12 @@ import Documents from './pages/Documents';
 import KYC from './pages/KYC';
 import NotFound from './pages/NotFound';
 import Access from './pages/Access';
+import AdminRouter from './pages/admin/AdminRouter';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import UserDetailView from './pages/admin/UserDetailView';
+import APIKeyManagement from './pages/admin/APIKeyManagement';
+import AuditLogs from './pages/admin/AuditLogs';
 
 // Google OAuth Client ID (reemplaza con tu Client ID real)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
@@ -65,6 +71,7 @@ function AppContent() {
                 {canAccessKYC && <Link to="/credentials" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Credenciales</Link>}
                 {canAccessKYC && <Link to="/documents" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>}
                 {canAccessVerifier && <Link to="/verify" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>}
+                {canAccessAdmin && <Link to="/admin" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Admin Panel</Link>}
                 <button onClick={handleLogout} className="text-sm font-semibold px-3 py-1.5 rounded-lg transition-all"
                   style={{ color: '#F87171', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
                   Salir
@@ -97,6 +104,7 @@ function AppContent() {
                 {canAccessKYC && <Link to="/credentials" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Credenciales</Link>}
                 {canAccessKYC && <Link to="/documents" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>}
                 {canAccessVerifier && <Link to="/verify" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>}
+                {canAccessAdmin && <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Admin Panel</Link>}
                 <button onClick={handleLogout} className="text-sm font-semibold py-2 text-left" style={{ color: '#F87171' }}>Salir</button>
               </>
             ) : (
@@ -118,6 +126,16 @@ function AppContent() {
         <Route path="/documents" element={isAuthenticated && canAccessKYC ? <Documents /> : <Navigate to="/login" />} />
         <Route path="/verify" element={isAuthenticated && canAccessVerifier ? <Verify /> : <Navigate to="/login" />} />
         <Route path="/access/:accessId" element={<Access />} />
+        
+        {/* Admin Routes - Protected by AdminRouter */}
+        <Route path="/admin" element={<AdminRouter />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="users/:userId" element={<UserDetailView />} />
+          <Route path="api-keys" element={<APIKeyManagement />} />
+          <Route path="logs" element={<AuditLogs />} />
+        </Route>
+        
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
