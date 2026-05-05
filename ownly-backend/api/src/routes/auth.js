@@ -8,6 +8,10 @@ import { createClient } from '@supabase/supabase-js';
 
 export const authRouter = Router();
 
+// DEBUG: Log Supabase connection details
+console.log('[AUTH] Supabase URL:', process.env.SUPABASE_URL);
+console.log('[AUTH] Service Key (first 20 chars):', process.env.SUPABASE_SERVICE_KEY?.substring(0, 20));
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
