@@ -102,11 +102,13 @@ export default function FilterPanel({ filters = [], activeFilters = {}, onChange
       case 'select':
         return (
           <div key={filter.key} className="flex-1 min-w-[180px]">
-            <label className="block text-xs font-semibold mb-2" style={{ color: 'rgba(240,234,255,0.6)' }}>
+            <label htmlFor={`filter-${filter.key}`} className="block text-xs font-semibold mb-2" style={{ color: 'rgba(240,234,255,0.6)' }}>
               {filter.label}
             </label>
             <div className="relative">
               <select
+                id={`filter-${filter.key}`}
+                aria-label={filter.label}
                 value={value}
                 onChange={(e) => handleFilterChange(filter.key, e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg text-sm appearance-none cursor-pointer transition-all focus:outline-none focus:ring-2"
