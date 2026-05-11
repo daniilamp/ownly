@@ -5,6 +5,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { verifyRouter } from "./routes/verify.js";
 import { credentialRouter } from "./routes/credentials.js";
+import { credentialsApiRouter } from "./routes/credentialsApi.js";
 import { batchRouter } from "./routes/batch.js";
 import { kycRouter } from "./routes/kyc.js";
 import { documentRouter } from "./routes/documents.js";
@@ -13,7 +14,10 @@ import { accessRouter } from "./routes/access.js";
 import { identityRouter } from "./routes/identity.js";
 import { apiKeysRouter } from "./routes/apiKeys.js";
 import { adminRouter } from "./routes/admin.js";
+import { businessRouter } from "./routes/businessRoutes.js";
+import { adminBusinessRouter } from "./routes/adminBusinessRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { initRetryService } from "./services/retryService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -59,6 +63,7 @@ app.use(express.json({ limit: "1mb" }));
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/api/verify", verifyLimiter, verifyRouter);
 app.use("/api/credentials", credentialRouter);
+app.use("/api/credentials", credentialsApiRouter);
 app.use("/api/batch", batchRouter);
 app.use("/api/kyc", kycRouter);
 app.use("/api/documents", documentRouter);
@@ -67,6 +72,8 @@ app.use("/api/identity", identityRouter);
 app.use("/api/access", accessRouter);
 app.use("/api/api-keys", apiKeysRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/admin/business-applications", adminBusinessRouter);
+app.use("/api/business", businessRouter);
 
 // Health check
 app.get("/health", (_, res) => res.json({ status: "ok", version: "1.0.0" }));
@@ -76,6 +83,11 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Ownly API running on port ${PORT}`);
+
+  // Initialize retry service for failed blockchain credentials (non-blocking)
+  initRetryService().catch(err => {
+    console.warn('Retry service initialization failed (non-fatal):', err.message);
+  });
 });
 
 export default app;

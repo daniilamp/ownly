@@ -76,7 +76,7 @@ export default function FilterPanel({ filters = [], activeFilters = {}, onChange
     switch (filter.type) {
       case 'text':
         return (
-          <div key={filter.key} className="flex-1 min-w-[200px]">
+          <div key={filter.key} className="w-full">
             <label className="block text-xs font-semibold mb-2" style={{ color: 'rgba(240,234,255,0.6)' }}>
               {filter.label}
             </label>
@@ -101,7 +101,7 @@ export default function FilterPanel({ filters = [], activeFilters = {}, onChange
 
       case 'select':
         return (
-          <div key={filter.key} className="flex-1 min-w-[180px]">
+          <div key={filter.key} className="w-full">
             <label htmlFor={`filter-${filter.key}`} className="block text-xs font-semibold mb-2" style={{ color: 'rgba(240,234,255,0.6)' }}>
               {filter.label}
             </label>
@@ -133,7 +133,7 @@ export default function FilterPanel({ filters = [], activeFilters = {}, onChange
 
       case 'dateRange':
         return (
-          <div key={filter.key} className="flex-1 min-w-[280px]">
+          <div key={filter.key} className="w-full md:col-span-2 xl:col-span-1">
             <label className="block text-xs font-semibold mb-2" style={{ color: 'rgba(240,234,255,0.6)' }}>
               {filter.label}
             </label>
@@ -178,7 +178,7 @@ export default function FilterPanel({ filters = [], activeFilters = {}, onChange
       case 'multiSelect':
         const selectedValues = value || [];
         return (
-          <div key={filter.key} className="flex-1 min-w-[200px]">
+          <div key={filter.key} className="w-full">
             <label className="block text-xs font-semibold mb-2" style={{ color: 'rgba(240,234,255,0.6)' }}>
               {filter.label}
             </label>
@@ -288,7 +288,7 @@ export default function FilterPanel({ filters = [], activeFilters = {}, onChange
       </div>
 
       {/* Filter inputs */}
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {filters.map(filter => renderFilter(filter))}
       </div>
     </div>

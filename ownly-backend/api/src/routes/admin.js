@@ -50,6 +50,48 @@ adminRouter.get('/users', async (req, res, next) => {
 });
 
 /**
+ * POST /api/admin/users
+ * Create a new user (admin can manually onboard businesses)
+ * Body: { email, role, password? }
+ */
+const CreateUserSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(['user', 'business', 'admin']),
+  password: z.string().min(8).optional(),
+});
+
+adminRouter.post('/users', async (req, res, next) => {
+  try {
+    const parsed = CreateUserSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const { email, role, password } = parsed.data;
+    const adminId = req.user.userId || req.user.id;
+
+    const result = await adminService.createUserManually(email, role, password, adminId);
+
+    return res.json({
+      success: true,
+      user: result.user,
+      message: `User created with role ${role}`,
+      tempPassword: result.tempPassword, // Only shown once
+    });
+  } catch (err) {
+    if (err.message.includes('already exists') || err.message.includes('already registered')) {
+      return res.status(409).json({ error: err.message });
+    }
+    console.error('Create user error:', err);
+    next(err);
+  }
+});
+
+/**
  * GET /api/admin/users/:userId
  * Get specific user details
  */

@@ -1,6 +1,6 @@
 import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { Shield, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
@@ -13,12 +13,25 @@ import Documents from './pages/Documents';
 import KYC from './pages/KYC';
 import NotFound from './pages/NotFound';
 import Access from './pages/Access';
-import AdminRouter from './pages/admin/AdminRouter';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import UserManagement from './pages/admin/UserManagement';
-import UserDetailView from './pages/admin/UserDetailView';
-import APIKeyManagement from './pages/admin/APIKeyManagement';
-import AuditLogs from './pages/admin/AuditLogs';
+
+// Lazy load admin routes for better performance
+const AdminRouter = lazy(() => import('./pages/admin/AdminRouter'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
+const UserDetailView = lazy(() => import('./pages/admin/UserDetailView'));
+const APIKeyManagement = lazy(() => import('./pages/admin/APIKeyManagement'));
+const AuditLogs = lazy(() => import('./pages/admin/AuditLogs'));
+const BusinessApplicationsAdmin = lazy(() => import('./pages/admin/BusinessApplications'));
+
+// Lazy load business portal routes
+const BusinessRegistration = lazy(() => import('./pages/business/BusinessRegistration'));
+
+// Lazy load business portal routes for better performance
+const BusinessRouter = lazy(() => import('./pages/business/BusinessRouter'));
+const BusinessDashboard = lazy(() => import('./pages/business/BusinessDashboard'));
+const BusinessAPIKeyManagement = lazy(() => import('./pages/business/APIKeyManagement'));
+const DocumentationViewer = lazy(() => import('./pages/business/DocumentationViewer'));
+const UsageDashboard = lazy(() => import('./pages/business/UsageDashboard'));
 
 // Google OAuth Client ID (reemplaza con tu Client ID real)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
@@ -72,6 +85,7 @@ function AppContent() {
                 {canAccessKYC && <Link to="/documents" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>}
                 {canAccessVerifier && <Link to="/verify" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>}
                 {canAccessAdmin && <Link to="/admin" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Admin Panel</Link>}
+                {canAccessVerifier && <Link to="/business" className="text-sm font-semibold transition-all hover:scale-105" style={{ color: 'rgba(240,234,255,0.7)' }}>Business Portal</Link>}
                 <button onClick={handleLogout} className="text-sm font-semibold px-3 py-1.5 rounded-lg transition-all"
                   style={{ color: '#F87171', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
                   Salir
@@ -105,6 +119,7 @@ function AppContent() {
                 {canAccessKYC && <Link to="/documents" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Mis Documentos</Link>}
                 {canAccessVerifier && <Link to="/verify" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Verificador</Link>}
                 {canAccessAdmin && <Link to="/admin" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Admin Panel</Link>}
+                {canAccessVerifier && <Link to="/business" onClick={() => setMenuOpen(false)} className="text-sm font-semibold py-2" style={{ color: 'rgba(240,234,255,0.7)' }}>Business Portal</Link>}
                 <button onClick={handleLogout} className="text-sm font-semibold py-2 text-left" style={{ color: '#F87171' }}>Salir</button>
               </>
             ) : (
@@ -126,14 +141,101 @@ function AppContent() {
         <Route path="/documents" element={isAuthenticated && canAccessKYC ? <Documents /> : <Navigate to="/login" />} />
         <Route path="/verify" element={isAuthenticated && canAccessVerifier ? <Verify /> : <Navigate to="/login" />} />
         <Route path="/access/:accessId" element={<Access />} />
-        
-        {/* Admin Routes - Protected by AdminRouter */}
-        <Route path="/admin" element={<AdminRouter />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="users/:userId" element={<UserDetailView />} />
-          <Route path="api-keys" element={<APIKeyManagement />} />
-          <Route path="logs" element={<AuditLogs />} />
+
+        {/* Business Registration - Public page (no auth required) */}
+        <Route path="/business/register" element={
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#070510' }}>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} />
+            </div>
+          }>
+            <BusinessRegistration />
+          </Suspense>
+        } />
+
+        {/* Business Portal Routes - Protected by BusinessRouter with lazy loading */}
+        <Route path="/business" element={
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#070510' }}>
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: '#B794F6' }} />
+                <p className="text-sm font-semibold" style={{ color: 'rgba(240,234,255,0.6)' }}>Loading business portal...</p>
+              </div>
+            </div>
+          }>
+            <BusinessRouter />
+          </Suspense>
+        }>
+          <Route index element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <BusinessDashboard />
+            </Suspense>
+          } />
+          <Route path="dashboard" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <BusinessDashboard />
+            </Suspense>
+          } />
+          <Route path="api-keys" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <BusinessAPIKeyManagement />
+            </Suspense>
+          } />
+          <Route path="docs" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <DocumentationViewer />
+            </Suspense>
+          } />
+          <Route path="usage" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <UsageDashboard />
+            </Suspense>
+          } />
+        </Route>
+
+        {/* Admin Routes - Protected by AdminRouter with lazy loading */}
+        <Route path="/admin" element={
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#070510' }}>
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: '#B794F6' }} />
+                <p className="text-sm font-semibold" style={{ color: 'rgba(240,234,255,0.6)' }}>Loading admin panel...</p>
+              </div>
+            </div>
+          }>
+            <AdminRouter />
+          </Suspense>
+        }>
+          <Route index element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <AdminDashboard />
+            </Suspense>
+          } />
+          <Route path="users" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <UserManagement />
+            </Suspense>
+          } />
+          <Route path="users/:userId" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <UserDetailView />
+            </Suspense>
+          } />
+          <Route path="api-keys" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <APIKeyManagement />
+            </Suspense>
+          } />
+          <Route path="logs" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <AuditLogs />
+            </Suspense>
+          } />
+          <Route path="business-applications" element={
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: '#B794F6' }} /></div>}>
+              <BusinessApplicationsAdmin />
+            </Suspense>
+          } />
         </Route>
         
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />

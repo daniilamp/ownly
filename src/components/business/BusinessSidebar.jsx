@@ -1,20 +1,20 @@
 /**
- * AdminSidebar Component
- * Navigation menu for admin sections
+ * BusinessSidebar Component
+ * Navigation menu for business portal sections
  * Features:
- * - Navigation links (Dashboard, Users, API Keys, Audit Logs)
+ * - Navigation links (Dashboard, API Keys, Documentation, Usage)
  * - Active route highlighting
  * - User email and role display
  * - Logout button
  * 
- * Requirements: 19.1, 19.2, 19.3, 19.5, 19.6
+ * Requirements: 9.4
  */
 
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Key, FileText, LogOut, Shield, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Key, BookOpen, BarChart3, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function AdminSidebar({ isOpen, onClose, isMobile }) {
+export default function BusinessSidebar({ isOpen, onClose, isMobile }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -24,11 +24,10 @@ export default function AdminSidebar({ isOpen, onClose, isMobile }) {
   };
 
   const navItems = [
-    { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
-    { to: '/admin/users', icon: Users, label: 'Users' },
-    { to: '/admin/api-keys', icon: Key, label: 'API Keys' },
-    { to: '/admin/business-applications', icon: Briefcase, label: 'Business Apps' },
-    { to: '/admin/logs', icon: FileText, label: 'Audit Logs' },
+    { to: '/business', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/business/api-keys', icon: Key, label: 'API Keys' },
+    { to: '/business/docs', icon: BookOpen, label: 'Documentation' },
+    { to: '/business/usage', icon: BarChart3, label: 'Usage' },
   ];
 
   // Sidebar classes based on state
@@ -58,11 +57,11 @@ export default function AdminSidebar({ isOpen, onClose, isMobile }) {
               border: '1px solid rgba(183,148,246,0.25)',
             }}
           >
-            <Shield className="w-5 h-5" style={{ color: '#B794F6' }} />
+            <Building2 className="w-5 h-5" style={{ color: '#B794F6' }} />
           </div>
           <div>
             <h2 className="text-lg font-bold" style={{ color: '#F0EAFF' }}>
-              Admin Panel
+              Business Portal
             </h2>
           </div>
         </div>
@@ -107,10 +106,10 @@ export default function AdminSidebar({ isOpen, onClose, isMobile }) {
             Logged in as
           </p>
           <p className="text-sm font-semibold truncate" style={{ color: '#F0EAFF' }}>
-            {user?.email || 'admin@ownly.com'}
+            {user?.email || 'business@company.com'}
           </p>
           <p className="text-xs font-semibold mt-1" style={{ color: '#B794F6' }}>
-            Role: ADMIN
+            Role: BUSINESS
           </p>
         </div>
 

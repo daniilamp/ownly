@@ -14,7 +14,7 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users as UsersIcon } from 'lucide-react';
+import { Users as UsersIcon, UserPlus } from 'lucide-react';
 import { useAdminAPI } from '../../hooks/useAdminAPI';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePagination } from '../../hooks/usePagination';
@@ -34,6 +34,10 @@ export default function UserManagement() {
   });
   const [toasts, setToasts] = useState([]);
   const [error, setError] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ email: '', role: 'business', password: '' });
+  const [creating, setCreating] = useState(false);
+  const [createdUser, setCreatedUser] = useState(null);
 
   // Hooks
   const adminAPI = useAdminAPI();
@@ -199,11 +203,24 @@ export default function UserManagement() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <UsersIcon className="w-8 h-8" style={{ color: '#B794F6' }} />
-        <h1 className="text-3xl font-bold" style={{ color: '#F0EAFF' }}>
-          User Management
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <UsersIcon className="w-8 h-8" style={{ color: '#B794F6' }} />
+          <h1 className="text-3xl font-bold" style={{ color: '#F0EAFF' }}>
+            User Management
+          </h1>
+        </div>
+        <button
+          onClick={() => { setShowCreateModal(true); setCreatedUser(null); setCreateForm({ email: '', role: 'business', password: '' }); }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
+          style={{
+            background: 'linear-gradient(135deg, #B794F6, #7C3AED)',
+            color: '#070510',
+          }}
+        >
+          <UserPlus className="w-4 h-4" />
+          Create User
+        </button>
       </div>
 
       {/* Filter Panel */}
@@ -228,6 +245,116 @@ export default function UserManagement() {
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black bg-opacity-60" onClick={() => setShowCreateModal(false)} />
+          <div className="relative max-w-md w-full rounded-2xl p-6" style={{ background: '#0F0B1A', border: '1px solid rgba(183,148,246,0.2)' }}>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#F0EAFF' }}>
+              {createdUser ? 'User Created' : 'Create New User'}
+            </h2>
+
+            {createdUser ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)' }}>
+                  <p className="text-sm font-semibold mb-2" style={{ color: '#34D399' }}>User created successfully!</p>
+                  <p className="text-sm" style={{ color: '#F0EAFF' }}>Email: {createdUser.user?.email}</p>
+                  <p className="text-sm" style={{ color: '#F0EAFF' }}>Role: {createdUser.user?.role}</p>
+                  {createdUser.tempPassword && (
+                    <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
+                      <p className="text-xs font-semibold mb-1" style={{ color: '#FBBF24' }}>Temporary Password (save it now!):</p>
+                      <code className="text-sm font-mono break-all" style={{ color: '#F0EAFF' }}>{createdUser.tempPassword}</code>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setShowCreateModal(false); fetchUsers(); }}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold"
+                  style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510' }}
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: '#F0EAFF' }}>Email</label>
+                  <input
+                    type="email"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="user@company.com"
+                    className="w-full px-4 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.2)', color: '#F0EAFF' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: '#F0EAFF' }}>Role</label>
+                  <select
+                    value={createForm.role}
+                    onChange={(e) => setCreateForm(f => ({ ...f, role: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.2)', color: '#F0EAFF' }}
+                  >
+                    <option value="user">USER</option>
+                    <option value="business">BUSINESS</option>
+                    <option value="admin">ADMIN</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: '#F0EAFF' }}>Password (optional — auto-generated if empty)</label>
+                  <input
+                    type="text"
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder="Leave empty to auto-generate"
+                    className="w-full px-4 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ background: 'rgba(183,148,246,0.06)', border: '1px solid rgba(183,148,246,0.2)', color: '#F0EAFF' }}
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold"
+                    style={{ background: 'rgba(183,148,246,0.08)', border: '1px solid rgba(183,148,246,0.2)', color: '#F0EAFF' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!createForm.email) { showToast('error', 'Email is required'); return; }
+                      setCreating(true);
+                      try {
+                        const API_BASE = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
+                        const token = localStorage.getItem('ownly_token');
+                        const res = await fetch(`${API_BASE}/api/admin/users`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                          body: JSON.stringify({ email: createForm.email, role: createForm.role, ...(createForm.password ? { password: createForm.password } : {}) }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Failed to create user');
+                        setCreatedUser(data);
+                        showToast('success', 'User created successfully');
+                      } catch (err) {
+                        showToast('error', err.message);
+                      } finally {
+                        setCreating(false);
+                      }
+                    }}
+                    disabled={creating}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold"
+                    style={{ background: 'linear-gradient(135deg, #B794F6, #7C3AED)', color: '#070510', opacity: creating ? 0.6 : 1 }}
+                  >
+                    {creating ? 'Creating...' : 'Create User'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

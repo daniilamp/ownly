@@ -7,6 +7,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import AdminLayout from '@/components/admin/AdminLayout';
+import ErrorBoundary from '@/components/admin/ErrorBoundary';
 
 export default function AdminRouter() {
   const { isAuthenticated, userRole, loading } = useAuth();
@@ -31,5 +32,9 @@ export default function AdminRouter() {
   }
 
   // Render admin layout with nested routes if authenticated and admin
-  return <AdminLayout />;
+  return (
+    <ErrorBoundary>
+      <AdminLayout />
+    </ErrorBoundary>
+  );
 }

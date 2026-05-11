@@ -12,9 +12,13 @@
  * - Automatic JWT token injection from localStorage
  * - Error handling with user-friendly messages
  * - Loading state management
+ * - Data caching with TTL for performance optimization
+ * 
+ * Requirements: 24.3
  */
 
 import { useState, useCallback } from 'react';
+import { dataCache, CACHE_KEYS, CACHE_TTL } from '../utils/dataCache';
 
 const API_BASE_URL = import.meta.env.VITE_OWNLY_API_URL || 'http://localhost:3001';
 
@@ -140,7 +144,7 @@ export function useAdminAPI() {
   }, []);
 
   /**
-   * Update user role
+   * Update user role (with cache invalidation)
    * @param {string} userId - User ID
    * @param {string} role - New role (user, business, admin)
    * @param {string} reason - Reason for role change
@@ -155,6 +159,11 @@ export function useAdminAPI() {
         method: 'PUT',
         body: JSON.stringify({ role, reason }),
       });
+      
+      // Invalidate relevant caches
+      dataCache.invalidatePattern('admin:users:*');
+      dataCache.invalidate(CACHE_KEYS.USER_STATS);
+      
       return data.user;
     } catch (err) {
       setError(err.message);
@@ -165,7 +174,7 @@ export function useAdminAPI() {
   }, []);
 
   /**
-   * Update user status
+   * Update user status (with cache invalidation)
    * @param {string} userId - User ID
    * @param {string} status - New status (active, inactive, suspended)
    * @param {string} reason - Reason for status change (optional)
@@ -180,6 +189,11 @@ export function useAdminAPI() {
         method: 'PUT',
         body: JSON.stringify({ status, reason }),
       });
+      
+      // Invalidate relevant caches
+      dataCache.invalidatePattern('admin:users:*');
+      dataCache.invalidate(CACHE_KEYS.USER_STATS);
+      
       return data.user;
     } catch (err) {
       setError(err.message);
@@ -215,7 +229,7 @@ export function useAdminAPI() {
   }, []);
 
   /**
-   * Revoke API key
+   * Revoke API key (with cache invalidation)
    * @param {string} apiKeyId - API Key ID
    * @param {string} reason - Reason for revocation
    * @returns {Promise<Object>} Revoked API key object
@@ -229,6 +243,11 @@ export function useAdminAPI() {
         method: 'DELETE',
         body: JSON.stringify({ reason }),
       });
+      
+      // Invalidate relevant caches
+      dataCache.invalidatePattern('admin:apikeys:*');
+      dataCache.invalidate(CACHE_KEYS.API_STATS);
+      
       return data.apiKey;
     } catch (err) {
       setError(err.message);
@@ -310,7 +329,7 @@ export function useAdminAPI() {
   // ============================================
 
   /**
-   * Get user statistics
+   * Get user statistics (with caching)
    * @returns {Promise<Object>} User statistics
    */
   const getUserStats = useCallback(async () => {
@@ -318,8 +337,15 @@ export function useAdminAPI() {
     setError(null);
     
     try {
-      const data = await makeRequest('/api/admin/stats/users');
-      return data.stats;
+      const data = await dataCache.getOrSet(
+        CACHE_KEYS.USER_STATS,
+        async () => {
+          const response = await makeRequest('/api/admin/stats/users');
+          return response.stats;
+        },
+        CACHE_TTL.STATISTICS
+      );
+      return data;
     } catch (err) {
       setError(err.message);
       throw err;
@@ -329,7 +355,7 @@ export function useAdminAPI() {
   }, []);
 
   /**
-   * Get API usage statistics
+   * Get API usage statistics (with caching)
    * @returns {Promise<Object>} API usage statistics
    */
   const getAPIUsageStats = useCallback(async () => {
@@ -337,8 +363,15 @@ export function useAdminAPI() {
     setError(null);
     
     try {
-      const data = await makeRequest('/api/admin/stats/api-usage');
-      return data.stats;
+      const data = await dataCache.getOrSet(
+        CACHE_KEYS.API_STATS,
+        async () => {
+          const response = await makeRequest('/api/admin/stats/api-usage');
+          return response.stats;
+        },
+        CACHE_TTL.STATISTICS
+      );
+      return data;
     } catch (err) {
       setError(err.message);
       throw err;
@@ -348,7 +381,7 @@ export function useAdminAPI() {
   }, []);
 
   /**
-   * Get system health status
+   * Get system health status (with caching)
    * @returns {Promise<Object>} System health data
    */
   const getSystemHealth = useCallback(async () => {
@@ -356,8 +389,15 @@ export function useAdminAPI() {
     setError(null);
     
     try {
-      const data = await makeRequest('/api/admin/health');
-      return data.health;
+      const data = await dataCache.getOrSet(
+        CACHE_KEYS.SYSTEM_HEALTH,
+        async () => {
+          const response = await makeRequest('/api/admin/health');
+          return response.health;
+        },
+        CACHE_TTL.SYSTEM_HEALTH
+      );
+      return data;
     } catch (err) {
       setError(err.message);
       throw err;
@@ -367,7 +407,7 @@ export function useAdminAPI() {
   }, []);
 
   /**
-   * Get security summary
+   * Get security summary (with caching)
    * @param {number} hours - Number of hours to look back (default: 24)
    * @returns {Promise<Object>} Security summary data
    */
@@ -376,8 +416,15 @@ export function useAdminAPI() {
     setError(null);
     
     try {
-      const data = await makeRequest(`/api/admin/security/summary?hours=${hours}`);
-      return data.summary;
+      const data = await dataCache.getOrSet(
+        `${CACHE_KEYS.SECURITY_SUMMARY}:${hours}`,
+        async () => {
+          const response = await makeRequest(`/api/admin/security/summary?hours=${hours}`);
+          return response.summary;
+        },
+        CACHE_TTL.STATISTICS
+      );
+      return data;
     } catch (err) {
       setError(err.message);
       throw err;
